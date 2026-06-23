@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 
 ROOT = Path(__file__).resolve().parents[1]
 MD_PATH = ROOT / "docs" / "note-de-cadrage.md"
@@ -17,6 +18,7 @@ FONT = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
 
 
 MARGIN_MM = 20  # 2 cm
+HEADER_FOOTER_FONT_SIZE = 8
 
 
 class DocPDF(FPDF):
@@ -27,22 +29,42 @@ class DocPDF(FPDF):
         self.add_font("Doc", "I", FONT)
 
     def header(self):
-        self.set_font("Doc", "I", 8)
+        self.set_font("Doc", "I", HEADER_FOOTER_FONT_SIZE)
         self.set_text_color(120, 120, 120)
+        left = "Note de cadrage NeoTravel"
+        right = "Groupe 16"
+        line_h = 5
         self.set_x(self.l_margin)
-        self.multi_cell(self.epw, 5, "NeoTravel — Note de cadrage — Groupe 16", align="R")
+        self.cell(self.epw / 2, line_h, left, new_x=XPos.RIGHT, new_y=YPos.TOP)
+        self.set_x(self.l_margin + self.epw / 2)
+        self.cell(
+            self.epw / 2,
+            line_h,
+            right,
+            align="R",
+            new_x=XPos.LMARGIN,
+            new_y=YPos.NEXT,
+        )
         self.ln(2)
 
     def footer(self):
         self.set_y(-MARGIN_MM)
-        self.set_font("Doc", "I", 8)
+        self.set_font("Doc", "I", HEADER_FOOTER_FONT_SIZE)
         self.set_text_color(120, 120, 120)
         self.set_x(self.l_margin)
-        self.multi_cell(self.epw, 5, f"Page {self.page_no()}", align="C")
+        self.cell(
+            self.epw,
+            5,
+            f"Page {self.page_no()}",
+            align="C",
+            new_x=XPos.LMARGIN,
+            new_y=YPos.TOP,
+        )
 
 
 def mc(pdf: DocPDF, h: float, text: str) -> None:
-    pdf.multi_cell(pdf.epw, h, text)
+    pdf.set_x(pdf.l_margin)
+    pdf.multi_cell(pdf.epw, h, text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
 
 def write_line(pdf: DocPDF, line: str) -> None:
