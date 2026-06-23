@@ -16,6 +16,9 @@ PDF_PATH = ROOT / "docs" / "note-de-cadrage.pdf"
 FONT = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
 
 
+MARGIN_MM = 20  # 2 cm
+
+
 class DocPDF(FPDF):
     def __init__(self) -> None:
         super().__init__()
@@ -26,14 +29,16 @@ class DocPDF(FPDF):
     def header(self):
         self.set_font("Doc", "I", 8)
         self.set_text_color(120, 120, 120)
-        self.cell(0, 6, "NeoTravel - Note de cadrage - Groupe 16", align="R", new_x="LMARGIN", new_y="NEXT")
+        self.set_x(self.l_margin)
+        self.multi_cell(self.epw, 5, "NeoTravel — Note de cadrage — Groupe 16", align="R")
         self.ln(2)
 
     def footer(self):
-        self.set_y(-12)
+        self.set_y(-MARGIN_MM)
         self.set_font("Doc", "I", 8)
         self.set_text_color(120, 120, 120)
-        self.cell(0, 8, f"Page {self.page_no()}", align="C")
+        self.set_x(self.l_margin)
+        self.multi_cell(self.epw, 5, f"Page {self.page_no()}", align="C")
 
 
 def mc(pdf: DocPDF, h: float, text: str) -> None:
@@ -66,7 +71,7 @@ def write_line(pdf: DocPDF, line: str) -> None:
         pdf.ln(2)
         pdf.set_draw_color(200, 200, 200)
         y = pdf.get_y()
-        pdf.line(10, y, 200, y)
+        pdf.line(pdf.l_margin, y, pdf.w - pdf.r_margin, y)
         pdf.ln(4)
         return
 
@@ -111,8 +116,8 @@ def main() -> int:
 
     text = md_path.read_text(encoding="utf-8")
     pdf = DocPDF()
-    pdf.set_margins(15, 15, 15)
-    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_margins(MARGIN_MM, MARGIN_MM, MARGIN_MM)
+    pdf.set_auto_page_break(auto=True, margin=MARGIN_MM)
     pdf.add_page()
 
     for line in text.splitlines():
