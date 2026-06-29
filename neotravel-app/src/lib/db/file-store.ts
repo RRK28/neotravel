@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
 import type { DashboardStats, Demande, Devis, LogEntry, Relance, StatutDemande } from "@/lib/types";
+import { isStatutDemandeFinal } from "@/lib/types";
 
 const DATA_DIR =
   process.env.VERCEL === "1"
@@ -111,6 +112,9 @@ export async function updateDemande(
     updated_at: new Date().toISOString(),
   };
   await save(store);
+  if (clean.statut && isStatutDemandeFinal(clean.statut)) {
+    await annulerRelancesDemande(id);
+  }
   return store.demandes[idx];
 }
 
@@ -176,6 +180,22 @@ export async function listLogs(limit = 100): Promise<LogEntry[]> {
   return [...store.logs]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, limit);
+}
+
+export async function annulerRelancesDemande(demandeId: string): Promise<number> {
+  const store = await ensureStore();
+  let count = 0;
+  for (const r of store.relances) {
+    if (r.demande_id === demandeId && r.statut === "en_attente") {
+      r.statut = "annulee";
+      count++;
+    }
+  }
+  if (count > 0) {
+    await save(store);
+    await logAction("relances_annulees", { demande_id: demandeId, count }, demandeId);
+  }
+  return count;
 }
 
 export async function getRelancesDue(): Promise<Relance[]> {

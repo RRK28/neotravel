@@ -17,6 +17,7 @@ export const getDevis = backend.getDevis;
 export const listDevis = backend.listDevis;
 export const createRelance = backend.createRelance;
 export const listRelances = backend.listRelances;
+export const annulerRelancesDemande = backend.annulerRelancesDemande;
 export const listLogs = backend.listLogs;
 export const getRelancesDue = backend.getRelancesDue;
 export const processRelance = backend.processRelance;

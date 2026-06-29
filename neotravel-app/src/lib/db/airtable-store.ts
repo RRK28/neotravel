@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import type { DashboardStats, Demande, Devis, LogEntry, Relance, StatutDemande } from "@/lib/types";
+import { isStatutDemandeFinal } from "@/lib/types";
 import { getAirtableConfig } from "@/lib/db/airtable-config";
 
 interface AirtableRecord<T> {
@@ -196,6 +197,9 @@ export async function updateDemande(
   };
 
   await replaceRecord(tables.demandes, found.airtableId, updated);
+  if (clean.statut && isStatutDemandeFinal(clean.statut)) {
+    await annulerRelancesDemande(id);
+  }
   return updated;
 }
 
@@ -266,6 +270,25 @@ export async function listLogs(limit = 100): Promise<LogEntry[]> {
     .map((r) => r.entity)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, limit);
+}
+
+export async function annulerRelancesDemande(demandeId: string): Promise<number> {
+  const { tables } = getAirtableConfig();
+  const records = await listAllFromTable<Relance>(tables.relances);
+  let count = 0;
+
+  for (const { airtableId, entity } of records) {
+    if (entity.demande_id === demandeId && entity.statut === "en_attente") {
+      const updated: Relance = { ...entity, statut: "annulee" };
+      await replaceRecord(tables.relances, airtableId, updated);
+      count++;
+    }
+  }
+
+  if (count > 0) {
+    await logAction("relances_annulees", { demande_id: demandeId, count }, demandeId);
+  }
+  return count;
 }
 
 export async function getRelancesDue(): Promise<Relance[]> {

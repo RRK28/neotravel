@@ -13,7 +13,7 @@ npm run build && npm start   # production locale
 
 ### Prérequis optionnels
 
-- **Ollama** (LLM local) : `ollama serve` + `ollama pull llama3.2`
+- **Ollama** (LLM local) : `ollama serve` + `ollama pull llama3.2` — voir [docs/local-ollama.md](docs/local-ollama.md)
 - **n8n** : depuis la racine du repo, `docker compose up -d n8n`
 - **Tunnel public** : `npm run tunnel` (Cloudflare → port 3000)
 
@@ -24,8 +24,9 @@ npm run build && npm start   # production locale
 | `LLM_PROVIDER` | Non | `ollama` (défaut) ou `openai` |
 | `OLLAMA_BASE_URL` | Si Ollama | ex. `http://127.0.0.1:11434` |
 | `OLLAMA_MODEL` | Si Ollama | ex. `llama3.2` |
+| `OLLAMA_MAX_TOKENS` | Si Ollama | Limite tokens sortie (défaut `512`) |
 | `OPENAI_API_KEY` | Si OpenAI | Clé API |
-| `DEMO_MODE` | Recommandé | `true` — relances accélérées (minutes) |
+| `DEMO_MODE` | Recommandé | `true` — relances accélérées (+2 / +7 min) |
 | `WEBHOOK_SECRET` | Recommandé | Secret header `x-webhook-secret` (relances n8n) |
 | `APP_BASE_URL` | Prod | URL publique (emails, liens devis) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Email réel | Brevo / Gmail |

@@ -1,0 +1,529 @@
+{
+  "name": "NeoTravel — Relances devis",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## NeoTravel × n8n Cloud\n\n**Architecture des relances automatiques**\n\n1. **Déclencheurs** — planification toutes les 15 min (production) ou bouton manuel (soutenance)\n2. **Config NeoTravel** — URL webhook + secret (`WEBHOOK_SECRET` Vercel)\n3. **Vérification** — GET sur l'API pour confirmer que NeoTravel répond\n4. **Relances** — POST sécurisé vers `/api/webhooks/relance`\n5. **Résultat** — succès, aucune relance due, ou erreur\n\n⚠️ **Après import** : ouvrir le nœud **Config NeoTravel** et remplacer `COLLER_WEBHOOK_SECRET_ICI` par la valeur de `WEBHOOK_SECRET` (Vercel → Environment Variables).\n\n🔗 App : https://neotravel-app-gamma.vercel.app",
+        "height": 420,
+        "width": 460,
+        "color": 4
+      },
+      "id": "sticky-architecture",
+      "name": "Architecture NeoTravel",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-520, -80]
+    },
+    {
+      "parameters": {},
+      "id": "manual-demo",
+      "name": "▶ Démo soutenance",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 220]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Toutes les 15 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "merge-triggers",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [280, 110]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-webhook-url",
+              "name": "webhook_url",
+              "value": "https://neotravel-app-gamma.vercel.app/api/webhooks/relance",
+              "type": "string"
+            },
+            {
+              "id": "cfg-app-url",
+              "name": "app_url",
+              "value": "https://neotravel-app-gamma.vercel.app",
+              "type": "string"
+            },
+            {
+              "id": "cfg-webhook-secret",
+              "name": "webhook_secret",
+              "value": "COLLER_WEBHOOK_SECRET_ICI",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-config",
+      "name": "Config NeoTravel",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [520, 110]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://neotravel-app-gamma.vercel.app/api/webhooks/relance",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http-verify",
+      "name": "Vérifier NeoTravel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 110]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-api-200",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-api-ok",
+      "name": "API joignable?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1000, 110]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://neotravel-app-gamma.vercel.app/api/webhooks/relance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $('Config NeoTravel').item.json.webhook_secret }}"
+            },
+            {
+              "name": "x-app-base-url",
+              "value": "={{ $('Config NeoTravel').item.json.app_url }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http-post-relance",
+      "name": "POST relances devis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1240, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-ok-true",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-response-ok",
+      "name": "Réponse OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1480, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-traitees-gt0",
+              "leftValue": "={{ $json.traitees }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-relances-sent",
+      "name": "Relances envoyées?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1720, -80]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "succ-status",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "succ-message",
+              "name": "message",
+              "value": "={{ $json.traitees }} relance(s) envoyée(s) avec succès.",
+              "type": "string"
+            },
+            {
+              "id": "succ-traitees",
+              "name": "traitees",
+              "value": "={{ $json.traitees }}",
+              "type": "number"
+            },
+            {
+              "id": "succ-ok",
+              "name": "ok",
+              "value": "={{ $json.ok }}",
+              "type": "boolean"
+            },
+            {
+              "id": "succ-results",
+              "name": "results",
+              "value": "={{ $json.results }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-success",
+      "name": "Succès",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1960, -160]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "idle-status",
+              "name": "status",
+              "value": "idle",
+              "type": "string"
+            },
+            {
+              "id": "idle-message",
+              "name": "message",
+              "value": "Aucune relance due pour le moment. L'API NeoTravel répond correctement (ok: true, traitees: 0).",
+              "type": "string"
+            },
+            {
+              "id": "idle-traitees",
+              "name": "traitees",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "idle-ok",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-idle",
+      "name": "Aucune relance due",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1960, 0]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "err-status",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "err-message",
+              "name": "message",
+              "value": "={{ $json.error || $json.message || ('Erreur NeoTravel — HTTP ' + ($json.statusCode || 'inconnu')) }}",
+              "type": "string"
+            },
+            {
+              "id": "err-detail",
+              "name": "detail",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-error",
+      "name": "Erreur",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1720, 240]
+    },
+    {
+      "parameters": {
+        "jsCode": "function nodeJson(name) {\n  const n = $(name);\n  if (!n.isExecuted) return null;\n  const item = n.first();\n  return item ? item.json : null;\n}\n\nconst input = $input.first().json;\nconst config = nodeJson('Config NeoTravel') ?? {};\nconst verify = nodeJson('Vérifier NeoTravel');\nconst post = nodeJson('POST relances devis');\n\nreturn [{\n  json: {\n    execution_summary: {\n      at: new Date().toISOString(),\n      service: 'neotravel-relances',\n      status: input.status || 'unknown',\n      message: input.message,\n      traitees: input.traitees ?? post?.traitees ?? 0,\n      ok: input.ok ?? post?.ok ?? null,\n      app_url: config.app_url,\n      webhook_url: config.webhook_url,\n      api_reachable: verify?.statusCode === 200,\n      post_ok: post?.ok ?? null\n    }\n  }\n}];"
+      },
+      "id": "code-summary",
+      "name": "Résumé exécution",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2200, 0]
+    }
+  ],
+  "connections": {
+    "▶ Démo soutenance": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Toutes les 15 min": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Config NeoTravel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config NeoTravel": {
+      "main": [
+        [
+          {
+            "node": "Vérifier NeoTravel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vérifier NeoTravel": {
+      "main": [
+        [
+          {
+            "node": "API joignable?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API joignable?": {
+      "main": [
+        [
+          {
+            "node": "POST relances devis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erreur",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST relances devis": {
+      "main": [
+        [
+          {
+            "node": "Réponse OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Réponse OK?": {
+      "main": [
+        [
+          {
+            "node": "Relances envoyées?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erreur",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Relances envoyées?": {
+      "main": [
+        [
+          {
+            "node": "Succès",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aucune relance due",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Succès": {
+      "main": [
+        [
+          {
+            "node": "Résumé exécution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aucune relance due": {
+      "main": [
+        [
+          {
+            "node": "Résumé exécution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Erreur": {
+      "main": [
+        [
+          {
+            "node": "Résumé exécution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "description": "Relances automatiques NeoTravel via n8n Cloud. Coller WEBHOOK_SECRET (Vercel) dans le nœud « Config NeoTravel » après import. Démo soutenance : cliquer « ▶ Démo soutenance » puis consulter Executions."
+  },
+  "tags": []
+}

@@ -3,6 +3,7 @@ import { parseDemandeFromText } from "@/lib/demande-ingest";
 import { calculerDevis, determinerUrgence } from "@/lib/pricing/calculer-devis";
 import { estimerTrajet } from "@/lib/pricing/estimer-trajet";
 import { sendDevisConfirmationEmail } from "@/lib/email/notifications";
+import { notifyDemandeIncompleteIfNeeded } from "@/lib/email/incomplete-demande";
 import { planifierRelancesDemande } from "@/lib/email/relances";
 import {
   champsManquantsClient,
@@ -63,7 +64,7 @@ function mergeQualifierFields(input: QualifierInput): Partial<Demande> {
 }
 
 /** Qualifie une demande (parse texte ou champs structurés) — outil n8n / agent. */
-export async function n8nQualifier(input: QualifierInput) {
+export async function n8nQualifier(input: QualifierInput, baseUrl?: string) {
   const merged = mergeQualifierFields(input);
   const hasData = Object.values(merged).some((v) => v !== undefined && v !== null && v !== "");
 
@@ -99,6 +100,12 @@ export async function n8nQualifier(input: QualifierInput) {
 
   await logAction("qualifier_demande", { source: "n8n", score, missing }, demande.id);
 
+  let email_incomplet_envoye = false;
+  if (missing.length > 0 && demande.email) {
+    const notif = await notifyDemandeIncompleteIfNeeded(demande, missing, baseUrl);
+    email_incomplet_envoye = notif.sent;
+  }
+
   return {
     demande_id: demande.id,
     statut,
@@ -107,6 +114,7 @@ export async function n8nQualifier(input: QualifierInput) {
     champs_manquants: missing,
     urgence,
     pret_pour_devis: missing.length === 0,
+    email_incomplet_envoye,
     distance_km: demande.distance_km,
     ville_depart: demande.ville_depart,
     ville_arrivee: demande.ville_arrivee,
@@ -246,6 +254,31 @@ export async function n8nGenererDevis(demandeId: string, baseUrl?: string) {
     email_sent,
     email_simulated,
     email_error,
+  };
+}
+
+/** Envoie l'email demande incomplète si nécessaire (anti-spam intégré). */
+export async function n8nNotifierIncomplet(demandeId: string, baseUrl?: string) {
+  const demande = await getDemande(demandeId);
+  if (!demande) {
+    return { erreur: "Demande introuvable" };
+  }
+
+  const missing = champsManquantsClient(demande);
+  if (missing.length === 0) {
+    return { erreur: "Demande complète — pas de notification incomplet" };
+  }
+  if (!demande.email) {
+    return { erreur: "Pas d'email client" };
+  }
+
+  const notif = await notifyDemandeIncompleteIfNeeded(demande, missing, baseUrl);
+  return {
+    demande_id: demandeId,
+    champs_manquants: missing,
+    email_envoye: notif.sent,
+    email_simulated: notif.simulated,
+    error: notif.error,
   };
 }
 

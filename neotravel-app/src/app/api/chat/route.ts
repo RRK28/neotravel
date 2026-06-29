@@ -48,12 +48,15 @@ export async function POST(req: Request) {
 
   const system = `${SYSTEM_PROMPT}\n\nRÉSULTAT BACK-OFFICE :\n${pipeline.replyHint}`;
 
+  const ollamaMaxTokens = parseInt(process.env.OLLAMA_MAX_TOKENS ?? "512", 10);
+
   const result = streamText({
     model,
     system,
     messages: await convertToModelMessages(messages),
     tools,
     temperature: provider.kind === "ollama" ? 0 : undefined,
+    maxOutputTokens: provider.kind === "ollama" ? ollamaMaxTokens : undefined,
     stopWhen: stepCountIs(8),
     onFinish: async ({ usage }) => {
       await logAction(

@@ -7,7 +7,8 @@ export async function POST(req: Request) {
   if (denied) return denied;
 
   const body = (await req.json()) as QualifierInput;
-  const result = await n8nQualifier(body);
+  const baseUrl = new URL(req.url).origin;
+  const result = await n8nQualifier(body, baseUrl);
 
   if ("erreur" in result && result.erreur && !("demande_id" in result)) {
     return NextResponse.json(result, { status: 400 });

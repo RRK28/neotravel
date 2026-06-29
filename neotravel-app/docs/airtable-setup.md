@@ -6,7 +6,94 @@ Sans `AIRTABLE_API_KEY` **et** `AIRTABLE_BASE_ID`, l'application utilise le **st
 
 ---
 
-## Checklist rapide (base **NeoTravelBDD**)
+## Création automatique via API Meta (recommandé)
+
+Un script ou des appels `curl` peuvent créer le schéma NeoTravel sans manipuler l'interface Airtable.
+
+### Prérequis PAT
+
+1. [airtable.com/create/tokens](https://airtable.com/create/tokens) → éditez le token `NeoTravel Vercel`.
+2. **Scopes** minimum :
+   - `data.records:read`
+   - `data.records:write`
+   - `schema.bases:read` *(lister les bases et tables)*
+   - `schema.bases:write` *(créer une base ou des tables — requis pour l'automatisation)*
+3. **Access** : cochez au moins une base accessible au token *(ou « All current and future bases » en dev)*.
+
+### Option A — Créer une base « NeoTravel » complète
+
+```bash
+cd neotravel-app
+source <(grep -E '^AIRTABLE_API_KEY=' .env | sed 's/^/export /')
+
+curl -s -X POST \
+  -H "Authorization: Bearer $AIRTABLE_API_KEY" \
+  -H "Content-Type: application/json" \
+  https://api.airtable.com/v0/meta/bases \
+  -d '{
+    "name": "NeoTravel",
+    "tables": [
+      {"name":"Demandes","fields":[{"name":"id","type":"singleLineText"},{"name":"data","type":"multilineText"}]},
+      {"name":"Devis","fields":[{"name":"id","type":"singleLineText"},{"name":"data","type":"multilineText"}]},
+      {"name":"Relances","fields":[{"name":"id","type":"singleLineText"},{"name":"data","type":"multilineText"}]},
+      {"name":"Logs","fields":[{"name":"id","type":"singleLineText"},{"name":"data","type":"multilineText"}]}
+    ]
+  }'
+```
+
+> Si la réponse est **422** ou **403**, le PAT n'a pas le scope `schema.bases:write` ou Airtable refuse la création multi-tables — passez à l'option B.
+
+### Option B — Tables dans une base existante (déployé Groupe 16)
+
+Si `GET /v0/meta/bases` liste une base accessible (ex. `Untitled Base`, id `appx9fCuMqI40jfNO`) :
+
+```bash
+BASE_ID="appx9fCuMqI40jfNO"   # remplacez par votre id
+
+for TABLE in Demandes Devis Relances Logs; do
+  curl -s -X POST \
+    -H "Authorization: Bearer $AIRTABLE_API_KEY" \
+    -H "Content-Type: application/json" \
+    "https://api.airtable.com/v0/meta/bases/${BASE_ID}/tables" \
+    -d "{\"name\":\"$TABLE\",\"fields\":[{\"name\":\"id\",\"type\":\"singleLineText\"},{\"name\":\"data\",\"type\":\"multilineText\"}]}"
+done
+```
+
+- La table par défaut **Table 1** peut rester vide (l'app l'ignore) ; la suppression via API meta n'est pas toujours disponible.
+- Renommez la base en **NeoTravel** dans l'UI Airtable si souhaité.
+
+**Base configurée (juin 2026)** : `AIRTABLE_BASE_ID=appx9fCuMqI40jfNO` — tables `Demandes`, `Devis`, `Relances`, `Logs` avec champs `id` + `data`.
+
+### Option C — Base visible dans l'UI mais absente de l'API
+
+Symptôme : l'interface montre **NeoTravelBDD** avec 4 tables, mais `curl …/meta/bases` renvoie `bases: []` ou une autre base seulement.
+
+**Cause** : le PAT n'a pas accès à NeoTravelBDD.
+
+**Action** (1 clic) : [airtable.com/create/tokens](https://airtable.com/create/tokens) → éditer le token → section **Access** → cocher **NeoTravelBDD** → Save. Relancez `GET /v0/meta/bases` pour récupérer le `app…` correct.
+
+### Après création API
+
+```bash
+# .env local
+AIRTABLE_BASE_ID=appXXXXXXXXXXXXXX
+
+# Vercel (scope grp-16)
+printf '%s' "$AIRTABLE_BASE_ID" | npx vercel env add AIRTABLE_BASE_ID production --scope grp-16 --yes
+printf '%s' "$AIRTABLE_BASE_ID" | npx vercel env add AIRTABLE_BASE_ID preview --scope grp-16 --yes
+bash scripts/deploy-vercel.sh
+```
+
+Vérification :
+
+```bash
+curl -s https://neotravel-app-gamma.vercel.app/api/n8n/status | jq .storage_backend
+# → "airtable"
+```
+
+---
+
+## Checklist rapide (base **NeoTravelBDD** — manuel UI)
 
 > La table par défaut **Table 1** (colonnes *Name*, *Notes*) **n'est pas** le schéma NeoTravel. Ne la renommez pas en « Demandes » : créez de **nouvelles** tables ou supprimez Table 1.
 
@@ -15,10 +102,40 @@ Sans `AIRTABLE_API_KEY` **et** `AIRTABLE_BASE_ID`, l'application utilise le **st
 | **1** | Ouvrez la base **[NeoTravelBDD](https://airtable.com)** (menu Accueil → votre base). |
 | **2** | **Supprimez** « Table 1 » *(⋯ à côté du nom → Delete table)* **ou** laissez-la vide et ignorez-la. |
 | **3** | Créez **4 tables** avec ces noms **exacts** : `Demandes`, `Devis`, `Relances`, `Logs` *(bouton **+** en bas à gauche → Add table)*. |
-| **4** | Dans **chaque** table : supprimez les colonnes par défaut, puis ajoutez **`id`** (*Single line text*) et **`data`** (*Long text*). |
+| **4** | Dans **chaque** table : corrigez les colonnes (procédure détaillée ci-dessous — **y compris Logs**). |
 | **5** | Copiez l'**ID de la base** dans l'URL du navigateur : `https://airtable.com/appXXXXXXXXXXXXXX/...` → notez `appXXXXXXXXXXXXXX`. |
 
 Ensuite : donnez l'accès à cette base à votre token PAT (section ci-dessous) et renseignez `AIRTABLE_BASE_ID` en local et sur Vercel.
+
+### Corriger les colonnes — procédure en 3 étapes (à répéter sur **chaque** table)
+
+> Airtable crée par défaut *Name*, *Notes*, *Assignee* (et parfois *Status*, *Attachments*). L'application **n'utilise que** `id` + `data`. Si ces colonnes par défaut restent, les écritures échouent (`UNKNOWN_FIELD_NAME` ou `INVALID_VALUE_FOR_COLUMN`).
+
+**Table Demandes**
+
+1. Cliquez sur l'onglet **Demandes** en bas de l'écran.
+2. **Renommez** la colonne *Name* en `id` *(clic sur l'en-tête → Rename field)* — type **Single line text**. **Supprimez** *Notes*, *Assignee* et toute autre colonne par défaut *(clic sur l'en-tête → Delete field)*.
+3. **Ajoutez** une colonne `data` : bouton **+** à droite des colonnes → **Long text**.
+
+**Table Devis**
+
+1. Cliquez sur l'onglet **Devis**.
+2. **Renommez** *Name* → `id` (Single line text). **Supprimez** *Notes*, *Assignee* et les colonnes par défaut restantes.
+3. **Ajoutez** `data` (Long text).
+
+**Table Relances**
+
+1. Cliquez sur l'onglet **Relances**.
+2. **Renommez** *Name* → `id` (Single line text). **Supprimez** *Notes*, *Assignee* et les colonnes par défaut restantes.
+3. **Ajoutez** `data` (Long text).
+
+**Table Logs** *(souvent oubliée — même schéma que les 3 autres)*
+
+1. Cliquez sur l'onglet **Logs**.
+2. **Renommez** *Name* → `id` (Single line text). **Supprimez** *Notes*, *Assignee* et les colonnes par défaut restantes.
+3. **Ajoutez** `data` (Long text).
+
+**Résultat attendu** : chaque table n'a **que 2 colonnes** — `id` puis `data`, dans cet ordre.
 
 ---
 
@@ -54,6 +171,25 @@ L'app lit/écrit via `airtable-store.ts` : **4 tables**, chacune avec **2 champs
 
 Répétez la même structure pour **Devis**, **Relances** et **Logs**.
 
+### Noms de champs exacts attendus par `airtable-store.ts`
+
+L'API Airtable reçoit pour chaque création/mise à jour :
+
+```json
+{
+  "fields": {
+    "id": "<uuid-neotravel>",
+    "data": "<json-stringifié-de-l-objet-complet>"
+  }
+}
+```
+
+| Erreur Airtable | Cause |
+|-----------------|-------|
+| `UNKNOWN_FIELD_NAME` pour `id` ou `data` | Colonnes par défaut (*Name*, *Notes*…) non remplacées par `id` + `data` |
+| `INVALID_VALUE_FOR_COLUMN` sur `data` | `data` n'est pas de type **Long text** (ex. encore *Notes* en multiline par défaut sans renommage) |
+| `NOT_FOUND` sur la table | Nom de table différent de `Demandes` / `Devis` / `Relances` / `Logs` (casse incluse) |
+
 ---
 
 ## Token API (Personal Access Token)
@@ -62,8 +198,9 @@ Répétez la même structure pour **Devis**, **Relances** et **Logs**.
 2. **Scopes** minimum :
    - `data.records:read`
    - `data.records:write`
-   - `schema.bases:read` *(recommandé — permet de lister les tables via l'API meta)*
-3. **Access** : ajoutez explicitement la base **NeoTravelBDD** *(sans cela, l'API renvoie `bases: []` et l'app ne peut pas écrire)*.
+   - `schema.bases:read` *(lister bases/tables via API meta)*
+   - `schema.bases:write` *(créer base/tables via API — section « Création automatique »)*
+3. **Access** : ajoutez explicitement la base cible *(NeoTravelBDD ou la base créée via API — sans cela, l'API renvoie `bases: []` et l'app ne peut pas écrire)*.
 4. Copiez le token (`pat...`) — affiché une seule fois.
 
 ### Vérifier le token (terminal, sans afficher le secret)
@@ -163,7 +300,11 @@ Une ligne doit apparaître dans la table **Demandes** (champ `id` + JSON dans `d
 
 | Symptôme | Cause probable | Action |
 |----------|----------------|--------|
+| **403** ou **INVALID_PERMISSIONS** sur `/meta/bases` | PAT sans `schema.bases:write` | [airtable.com/create/tokens](https://airtable.com/create/tokens) → ajouter `schema.bases:read` + `schema.bases:write` |
+| **422** sur `POST /meta/bases` | Création multi-tables refusée | Utiliser l'option B (tables une par une dans une base existante) |
 | `bases: []` via API meta | Token sans accès à NeoTravelBDD | Éditer le PAT → Access → cocher NeoTravelBDD |
+| API meta liste **Untitled Base** ou **Table 1** seulement, mais l'UI montre **NeoTravelBDD** avec 4 tables | Le PAT n'a accès qu'à une autre base | [airtable.com/create/tokens](https://airtable.com/create/tokens) → éditer le token → **Access** → ajouter **NeoTravelBDD** (pas seulement la base par défaut) |
+| 4 tables OK mais **Logs** a encore *Name* / *Notes* / *Assignee* | Colonnes non corrigées sur Logs | Suivre la procédure en 3 étapes pour l'onglet **Logs** (ci-dessus) |
 | `storage_backend: "file"` | `AIRTABLE_BASE_ID` absent sur Vercel | Ajouter la variable + redéployer |
 | **403 / NOT_FOUND** | Mauvais `AIRTABLE_BASE_ID` ou table absente | Vérifier noms exacts Demandes/Devis/Relances/Logs |
 | **INVALID_VALUE_FOR_COLUMN** | `data` pas en Long text ou `id` manquant | Recréer les champs avec les bons types |

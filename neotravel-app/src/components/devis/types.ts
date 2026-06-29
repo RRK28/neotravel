@@ -71,5 +71,15 @@ export function formDataFromSearchParams(params: URLSearchParams): Partial<Devis
   if (arr) partial.ville_arrivee = arr;
   const date = params.get("date_depart");
   if (date) partial.date_depart = date;
+  const email = params.get("email");
+  if (email) partial.email = email;
+  const nom = params.get("nom");
+  if (nom) partial.nom = nom;
+  const prenom = params.get("prenom");
+  if (prenom) partial.prenom = prenom;
+  const typeClient = params.get("type_client");
+  if (typeClient === "particulier" || typeClient === "entreprise") {
+    partial.type_client = typeClient;
+  }
   return partial;
 }

@@ -1,0 +1,289 @@
+{
+  "name": "NeoTravel — Orchestration complète",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## NeoTravel × n8n — Orchestration\n\n**Option A** : chat conversationnel + outils métier (`qualifier_demande`, `calculer_devis`, `generer_devis`)\n\nCe workflow enchaîne les **mêmes endpoints** que l'app via l'API REST NeoTravel.\n\n💾 **Persistance** : pas de nœud Airtable — l'API NeoTravel enregistre les demandes/devis dans Airtable (si configuré sur Vercel).\n\n### Chaîne démo jury (▶ Démo jury)\n1. GET `/api/n8n/status`\n2. POST `/api/n8n/qualifier` — Paris → Lyon (35 pax)\n3. IF demande complète\n4. POST `/api/n8n/calculer-devis`\n5. POST `/api/n8n/generer-devis` — PDF + email\n6. POST `/api/n8n/relance`\n\n### Branche planifiée (15 min)\nRelances : status → relance\n\n⚠️ Après import : nœud **Config NeoTravel** → remplacer `COLLER_WEBHOOK_SECRET_ICI` par `WEBHOOK_SECRET` (Vercel).\n\n🔗 App : https://neotravel-app-gamma.vercel.app",
+        "height": 480,
+        "width": 520,
+        "color": 4
+      },
+      "id": "sticky-architecture",
+      "name": "Architecture Option A",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-640, -120]
+    },
+    {
+      "parameters": {},
+      "id": "manual-demo",
+      "name": "▶ Démo jury",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 280]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 15 }]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Toutes les 15 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 80]
+    },
+    {
+      "parameters": { "mode": "append" },
+      "id": "merge-triggers",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [240, 180]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-app-url",
+              "name": "app_url",
+              "value": "https://neotravel-app-gamma.vercel.app",
+              "type": "string"
+            },
+            {
+              "id": "cfg-api-base",
+              "name": "api_base",
+              "value": "https://neotravel-app-gamma.vercel.app/api/n8n",
+              "type": "string"
+            },
+            {
+              "id": "cfg-webhook-secret",
+              "name": "webhook_secret",
+              "value": "COLLER_WEBHOOK_SECRET_ICI",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-config",
+      "name": "Config NeoTravel",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 180]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/status",
+        "options": {
+          "response": { "response": { "fullResponse": true, "neverError": true } }
+        }
+      },
+      "id": "http-status",
+      "name": "GET status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 180]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "cond-demo",
+              "leftValue": "={{ $('▶ Démo jury').isExecuted }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-demo-mode",
+      "name": "Démo jury?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [960, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/qualifier",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-webhook-secret", "value": "={{ $('Config NeoTravel').item.json.webhook_secret }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"Bonjour, je souhaite un devis pour 35 personnes de Paris à Lyon le 15/07/2026. Email : demo@neotravel.test\",\n  \"type_client\": \"particulier\",\n  \"email\": \"demo@neotravel.test\",\n  \"ville_depart\": \"Paris\",\n  \"ville_arrivee\": \"Lyon\",\n  \"date_depart\": \"2026-07-15\",\n  \"nb_passagers\": 35\n}",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "http-qualifier",
+      "name": "POST qualifier",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 80]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "cond-complete",
+              "leftValue": "={{ $json.pret_pour_devis }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-complete",
+      "name": "Demande complète?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1440, 80]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/calculer-devis",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-webhook-secret", "value": "={{ $('Config NeoTravel').item.json.webhook_secret }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ demande_id: $('POST qualifier').item.json.demande_id }) }}",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "http-calculer",
+      "name": "POST calculer-devis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/generer-devis",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-webhook-secret", "value": "={{ $('Config NeoTravel').item.json.webhook_secret }}" },
+            { "name": "x-app-base-url", "value": "={{ $('Config NeoTravel').item.json.app_url }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ demande_id: $('POST qualifier').item.json.demande_id }) }}",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "http-generer",
+      "name": "POST generer-devis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 0]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            { "id": "inc-status", "name": "step", "value": "incomplete", "type": "string" },
+            {
+              "id": "inc-msg",
+              "name": "message",
+              "value": "={{ $json.error ? ('Erreur API : ' + $json.error + ' — vérifier WEBHOOK_SECRET dans Config NeoTravel') : ('Demande incomplète — champs manquants : ' + ($json.missing || $json.champs_manquants || []).join(', ')) }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-incomplete",
+      "name": "Demande incomplète",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1680, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/relance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-webhook-secret", "value": "={{ $('Config NeoTravel').item.json.webhook_secret }}" },
+            { "name": "x-app-base-url", "value": "={{ $('Config NeoTravel').item.json.app_url }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={}",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "http-relance",
+      "name": "POST relance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2160, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "function nodeJson(name) {\n  const n = $(name);\n  if (!n.isExecuted) return null;\n  const item = n.first();\n  return item ? item.json : null;\n}\n\nconst config = nodeJson('Config NeoTravel') ?? {};\nconst status = nodeJson('GET status');\nconst qualifier = nodeJson('POST qualifier');\nconst calculer = nodeJson('POST calculer-devis');\nconst generer = nodeJson('POST generer-devis');\nconst relance = nodeJson('POST relance');\nconst incomplete = nodeJson('Demande incomplète');\nconst isDemo = $('▶ Démo jury').isExecuted;\n\nreturn [{\n  json: {\n    execution_summary: {\n      at: new Date().toISOString(),\n      service: 'neotravel-orchestration',\n      mode: isDemo ? 'demo_jury' : 'schedule_relances',\n      app_url: config.app_url,\n      api_reachable: status?.ok === true || status?.body?.ok === true,\n      pending_relances: status?.pending_relances ?? status?.body?.pending_relances ?? null,\n      qualifier: qualifier ? {\n        demande_id: qualifier.demande_id,\n        pret_pour_devis: qualifier.pret_pour_devis,\n        score: qualifier.score_completude,\n        error: qualifier.error ?? null,\n        missing: qualifier.missing ?? qualifier.champs_manquants ?? null\n      } : null,\n      incomplete_message: incomplete?.message ?? null,\n      calcul: calculer?.prix_ttc ? { prix_ttc: calculer.prix_ttc, prix_ht: calculer.prix_ht } : (calculer?.erreur ? { error: calculer.erreur } : null),\n      devis: generer?.devis_id ? {\n        devis_id: generer.devis_id,\n        prix_ttc: generer.prix_ttc,\n        email_sent: generer.email_sent\n      } : null,\n      relances: {\n        ok: relance?.ok ?? null,\n        traitees: relance?.traitees ?? 0\n      }\n    }\n  }\n}];"
+      },
+      "id": "code-summary",
+      "name": "Résumé orchestration",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2400, 180]
+    }
+  ],
+  "connections": {
+    "▶ Démo jury": { "main": [[{ "node": "Merge", "type": "main", "index": 0 }]] },
+    "Toutes les 15 min": { "main": [[{ "node": "Merge", "type": "main", "index": 1 }]] },
+    "Merge": { "main": [[{ "node": "Config NeoTravel", "type": "main", "index": 0 }]] },
+    "Config NeoTravel": { "main": [[{ "node": "GET status", "type": "main", "index": 0 }]] },
+    "GET status": { "main": [[{ "node": "Démo jury?", "type": "main", "index": 0 }]] },
+    "Démo jury?": {
+      "main": [
+        [{ "node": "POST qualifier", "type": "main", "index": 0 }],
+        [{ "node": "POST relance", "type": "main", "index": 0 }]
+      ]
+    },
+    "POST qualifier": { "main": [[{ "node": "Demande complète?", "type": "main", "index": 0 }]] },
+    "Demande complète?": {
+      "main": [
+        [{ "node": "POST calculer-devis", "type": "main", "index": 0 }],
+        [{ "node": "Demande incomplète", "type": "main", "index": 0 }]
+      ]
+    },
+    "POST calculer-devis": { "main": [[{ "node": "POST generer-devis", "type": "main", "index": 0 }]] },
+    "POST generer-devis": { "main": [[{ "node": "POST relance", "type": "main", "index": 0 }]] },
+    "Demande incomplète": { "main": [[{ "node": "POST relance", "type": "main", "index": 0 }]] },
+    "POST relance": { "main": [[{ "node": "Résumé orchestration", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "description": "Orchestration complète NeoTravel : qualifier → calculer → generer → relance. Coller WEBHOOK_SECRET dans Config NeoTravel. Démo : ▶ Démo jury."
+  },
+  "tags": []
+}

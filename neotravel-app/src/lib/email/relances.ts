@@ -1,32 +1,33 @@
 import {
+  annulerRelancesDemande,
   createRelance,
   getDemande,
   getRelancesDue,
   listDevis,
   processRelance,
 } from "@/lib/db/memory-store";
-import type { UrgenceCode } from "@/lib/types";
+import { isStatutDemandeFinal, type UrgenceCode } from "@/lib/types";
 import { sendRelanceEmail } from "@/lib/email/notifications";
+
+export { annulerRelancesDemande };
 
 export async function planifierRelancesDemande(
   demandeId: string,
   email: string,
-  urgence?: UrgenceCode,
+  _urgence?: UrgenceCode,
 ): Promise<void> {
   const isDemo =
     process.env.DEMO_MODE === "true" || process.env.NODE_ENV === "development";
-  const isUrgent = urgence === "DD_PRIORITAIRE" || urgence === "DD_URGENT";
 
   const date1 = new Date();
   const date2 = new Date();
 
   if (isDemo) {
     date1.setMinutes(date1.getMinutes() + 2);
-    date2.setMinutes(date2.getMinutes() + 4);
+    date2.setMinutes(date2.getMinutes() + 7);
   } else {
-    const jours1 = isUrgent ? 2 : 3;
-    date1.setDate(date1.getDate() + jours1);
-    date2.setDate(date2.getDate() + jours1 + 7);
+    date1.setDate(date1.getDate() + 2);
+    date2.setDate(date2.getDate() + 7);
   }
 
   await createRelance({
@@ -71,6 +72,18 @@ export async function processRelancesDue(baseUrl?: string): Promise<RelanceProce
         numero: relance.numero,
         email_sent: false,
         error: "Demande ou devis introuvable",
+      });
+      continue;
+    }
+
+    if (isStatutDemandeFinal(demande.statut)) {
+      await annulerRelancesDemande(relance.demande_id);
+      results.push({
+        relance_id: relance.id,
+        numero: relance.numero,
+        email_sent: false,
+        statut: "annulee",
+        error: `Demande en statut final : ${demande.statut}`,
       });
       continue;
     }

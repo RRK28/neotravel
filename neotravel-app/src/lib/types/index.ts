@@ -10,6 +10,10 @@ export type StatutDemande =
   | "cas_complexe"
   | "cloture";
 
+export function isStatutDemandeFinal(statut: StatutDemande): boolean {
+  return statut === "accepte" || statut === "refuse" || statut === "cloture";
+}
+
 export type TypeClient = "particulier" | "entreprise" | "collectivite" | "association";
 
 export type UrgenceCode = "DD_PRIORITAIRE" | "DD_URGENT" | "DD_NORMAL" | "DD_3MOISETPLUS";
@@ -36,6 +40,9 @@ export interface Demande {
   score_completude: number;
   cas_complexe?: boolean;
   motif_complexe?: string;
+  /** Champs manquants notifiés par email (anti-spam). */
+  email_incomplet_champs?: string[];
+  email_incomplet_envoye_at?: string;
   created_at: string;
   updated_at: string;
 }

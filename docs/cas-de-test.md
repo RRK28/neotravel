@@ -92,9 +92,11 @@ Messages définis dans `e2e/helpers.ts`.
 
 ## Scénario manuel — relances
 
-1. Après un devis, attendre 2 min (mode `DEMO_MODE=true`) ou appeler `POST /api/test/helpers` action `backdate_relances`.
+1. Après un devis, attendre 2 min puis 7 min (mode `DEMO_MODE=true`) ou appeler `POST /api/test/helpers` action `backdate_relances`.
 2. `POST /api/webhooks/relance` avec header `x-webhook-secret`.
 3. Admin : statut `relance_1` puis `relance_2` / `cloture`.
+
+**Annulation automatique** : si la demande passe en `accepte`, `refuse` ou `cloture` avant l’échéance, les relances `en_attente` passent en `annulee` (aucun email envoyé). Test unitaire : `src/lib/email/relances.test.ts`.
 
 ---
 

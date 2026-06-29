@@ -1,6 +1,7 @@
 import { calculerDevis, determinerUrgence } from "@/lib/pricing/calculer-devis";
 import { estimerTrajet } from "@/lib/pricing/estimer-trajet";
 import { sendDevisConfirmationEmail } from "@/lib/email/notifications";
+import { notifyDemandeIncompleteIfNeeded, LABEL_CHAMP_MANQUANT } from "@/lib/email/incomplete-demande";
 import { planifierRelancesDemande } from "@/lib/email/relances";
 import {
   champsManquantsClient,
@@ -14,14 +15,7 @@ import {
 } from "@/lib/db/memory-store";
 import type { Demande, TypeClient } from "@/lib/types";
 
-const LABEL_MANQUANT: Record<string, string> = {
-  email: "votre email de contact",
-  ville_depart: "la ville de départ",
-  ville_arrivee: "la ville d'arrivée",
-  date_depart: "la date souhaitée",
-  nb_passagers: "le nombre de passagers",
-  type_client: "si vous êtes un particulier ou une entreprise",
-};
+const LABEL_MANQUANT = LABEL_CHAMP_MANQUANT;
 
 export function parseDemandeFromText(text: string): Partial<Demande> {
   const lower = text.toLowerCase();
@@ -158,6 +152,7 @@ export async function processDemandePipeline(
   if (missing.length > 0) {
     const lisible = missing.map((k) => LABEL_MANQUANT[k] ?? k).join(", ");
     await updateDemande(demande.id, { statut: "incomplet", score_completude: score });
+    await notifyDemandeIncompleteIfNeeded(demande, missing, options?.baseUrl);
     const hint = `Il manque encore : ${lisible}. Pose UNE question simple au client. Ne demande JAMAIS la distance, la durée ni le prix — on les calcule nous-mêmes.`;
     return {
       replyHint: hint,

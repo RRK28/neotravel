@@ -3,9 +3,9 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## NeoTravel × n8n Cloud\n\n**Architecture des relances automatiques**\n\n1. **Déclencheurs** — planification toutes les 15 min (production) ou bouton manuel (soutenance)\n2. **Config NeoTravel** — URL webhook + secret (`WEBHOOK_SECRET` Vercel)\n3. **Vérification** — GET sur l'API pour confirmer que NeoTravel répond\n4. **Relances** — POST sécurisé vers `/api/webhooks/relance`\n5. **Résultat** — succès, aucune relance due, ou erreur\n\n⚠️ **Après import** : ouvrir le nœud **Config NeoTravel** et remplacer `COLLER_WEBHOOK_SECRET_ICI` par la valeur de `WEBHOOK_SECRET` (Vercel → Environment Variables).\n\n🔗 App : https://neotravel-app-gamma.vercel.app",
-        "height": 420,
-        "width": 460,
+        "content": "## NeoTravel × n8n — Relances devis\n\nWorkflow **léger** (relances seules). Même logique que la branche cron de `neotravel-orchestration.json`.\n\n1. **Déclencheurs** — cron 15 min (prod) ou ▶ Démo soutenance\n2. **Config NeoTravel** — `api_base` + `WEBHOOK_SECRET` (ex. dev `neotravel-dev-secret`)\n3. **Vérification** — GET `/api/n8n/status`\n4. **Relances** — POST `/api/n8n/relance` (alias `/api/webhooks/relance`)\n5. **Résultat** — emails client envoyés, idle, ou erreur\n\n### Règles métier (app)\n- Relances **uniquement** après devis complet (`generer-devis`)\n- Emails **client** : relances devis après generer-devis ; email incomplet après qualifier (si email)\n- Relances **planifiées** (J+2/J+7 ou +2/+7 min en `DEMO_MODE`)\n- **Annulées** auto si admin accepte / refuse / clôture\n- Admin `/admin` : accepter, refuser, clôturer, rouvrir\n\n💾 Persistance via API → **Airtable** en prod.\n\n⚠️ Coller `WEBHOOK_SECRET` — **pas** `VERCEL_TOKEN` (`vcp_…`).\n\n🔗 App : https://neotravel-app-gamma.vercel.app",
+        "height": 520,
+        "width": 480,
         "color": 4
       },
       "id": "sticky-architecture",
@@ -56,9 +56,9 @@
         "assignments": {
           "assignments": [
             {
-              "id": "cfg-webhook-url",
-              "name": "webhook_url",
-              "value": "https://neotravel-app-gamma.vercel.app/api/webhooks/relance",
+              "id": "cfg-api-base",
+              "name": "api_base",
+              "value": "https://neotravel-app-gamma.vercel.app/api/n8n",
               "type": "string"
             },
             {
@@ -86,7 +86,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://neotravel-app-gamma.vercel.app/api/webhooks/relance",
+        "url": "={{ $('Config NeoTravel').item.json.api_base }}/status",
         "options": {
           "response": {
             "response": {
@@ -97,7 +97,7 @@
         }
       },
       "id": "http-verify",
-      "name": "Vérifier NeoTravel",
+      "name": "GET status",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [760, 110]
@@ -113,12 +113,12 @@
           },
           "conditions": [
             {
-              "id": "cond-api-200",
-              "leftValue": "={{ $json.statusCode }}",
-              "rightValue": 200,
+              "id": "cond-api-ok",
+              "leftValue": "={{ $json.body?.ok ?? $json.ok }}",
+              "rightValue": true,
               "operator": {
-                "type": "number",
-                "operation": "equals"
+                "type": "boolean",
+                "operation": "true"
               }
             }
           ],
@@ -135,7 +135,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://neotravel-app-gamma.vercel.app/api/webhooks/relance",
+        "url": "={{ $('Config NeoTravel').item.json.api_base }}/relance",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -165,7 +165,7 @@
         }
       },
       "id": "http-post-relance",
-      "name": "POST relances devis",
+      "name": "POST relance",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1240, 0]
@@ -291,7 +291,7 @@
             {
               "id": "idle-message",
               "name": "message",
-              "value": "Aucune relance due pour le moment. L'API NeoTravel répond correctement (ok: true, traitees: 0).",
+              "value": "Aucune relance due. Normal si aucun devis récent ou relances pas encore échues (planifiées après generer-devis). L'API répond correctement.",
               "type": "string"
             },
             {
@@ -331,7 +331,7 @@
             {
               "id": "err-message",
               "name": "message",
-              "value": "={{ $json.error || $json.message || ('Erreur NeoTravel — HTTP ' + ($json.statusCode || 'inconnu')) }}",
+              "value": "={{ $json.error || $json.erreur || $json.message || ('Erreur NeoTravel — vérifier WEBHOOK_SECRET (pas VERCEL_TOKEN)') }}",
               "type": "string"
             },
             {
@@ -352,7 +352,7 @@
     },
     {
       "parameters": {
-        "jsCode": "function nodeJson(name) {\n  const n = $(name);\n  if (!n.isExecuted) return null;\n  const item = n.first();\n  return item ? item.json : null;\n}\n\nconst input = $input.first().json;\nconst config = nodeJson('Config NeoTravel') ?? {};\nconst verify = nodeJson('Vérifier NeoTravel');\nconst post = nodeJson('POST relances devis');\n\nreturn [{\n  json: {\n    execution_summary: {\n      at: new Date().toISOString(),\n      service: 'neotravel-relances',\n      status: input.status || 'unknown',\n      message: input.message,\n      traitees: input.traitees ?? post?.traitees ?? 0,\n      ok: input.ok ?? post?.ok ?? null,\n      app_url: config.app_url,\n      webhook_url: config.webhook_url,\n      api_reachable: verify?.statusCode === 200,\n      post_ok: post?.ok ?? null\n    }\n  }\n}];"
+        "jsCode": "function nodeJson(name) {\n  const n = $(name);\n  if (!n.isExecuted) return null;\n  const item = n.first();\n  return item ? item.json : null;\n}\n\nconst input = $input.first().json;\nconst config = nodeJson('Config NeoTravel') ?? {};\nconst status = nodeJson('GET status');\nconst post = nodeJson('POST relance');\nconst statusBody = status?.body ?? status;\n\nreturn [{\n  json: {\n    execution_summary: {\n      at: new Date().toISOString(),\n      service: 'neotravel-relances',\n      status: input.status || 'unknown',\n      message: input.message,\n      traitees: input.traitees ?? post?.traitees ?? 0,\n      ok: input.ok ?? post?.ok ?? null,\n      app_url: config.app_url,\n      api_base: config.api_base,\n      storage_backend: statusBody?.storage_backend ?? null,\n      pending_relances: statusBody?.pending_relances ?? null,\n      api_reachable: statusBody?.ok === true,\n      post_ok: post?.ok ?? null\n    }\n  }\n}];"
       },
       "id": "code-summary",
       "name": "Résumé exécution",
@@ -399,14 +399,14 @@
       "main": [
         [
           {
-            "node": "Vérifier NeoTravel",
+            "node": "GET status",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Vérifier NeoTravel": {
+    "GET status": {
       "main": [
         [
           {
@@ -421,7 +421,7 @@
       "main": [
         [
           {
-            "node": "POST relances devis",
+            "node": "POST relance",
             "type": "main",
             "index": 0
           }
@@ -435,7 +435,7 @@
         ]
       ]
     },
-    "POST relances devis": {
+    "POST relance": {
       "main": [
         [
           {
@@ -523,7 +523,7 @@
   },
   "meta": {
     "templateCredsSetupCompleted": true,
-    "description": "Relances automatiques NeoTravel via n8n Cloud. Coller WEBHOOK_SECRET (Vercel) dans le nœud « Config NeoTravel » après import. Démo soutenance : cliquer « ▶ Démo soutenance » puis consulter Executions."
+    "description": "Relances NeoTravel via /api/n8n/relance. Coller WEBHOOK_SECRET (ex. neotravel-dev-secret) dans Config NeoTravel — pas VERCEL_TOKEN. Démo : ▶ Démo soutenance."
   },
   "tags": []
 }

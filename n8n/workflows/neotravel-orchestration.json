@@ -3,13 +3,13 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## NeoTravel × n8n — Orchestration\n\n**Option A** : chat conversationnel + outils métier (`qualifier_demande`, `calculer_devis`, `generer_devis`)\n\nCe workflow enchaîne les **mêmes endpoints** que l'app via l'API REST NeoTravel.\n\n💾 **Persistance** : pas de nœud Airtable — l'API NeoTravel enregistre les demandes/devis dans Airtable (si configuré sur Vercel).\n\n### Chaîne démo jury (▶ Démo jury)\n1. GET `/api/n8n/status`\n2. POST `/api/n8n/qualifier` — Paris → Lyon (35 pax)\n3. IF demande complète\n4. POST `/api/n8n/calculer-devis`\n5. POST `/api/n8n/generer-devis` — PDF + email\n6. POST `/api/n8n/relance`\n\n### Branche planifiée (15 min)\nRelances : status → relance\n\n⚠️ Après import : nœud **Config NeoTravel** → remplacer `COLLER_WEBHOOK_SECRET_ICI` par `WEBHOOK_SECRET` (Vercel).\n\n🔗 App : https://neotravel-app-gamma.vercel.app",
-        "height": 480,
-        "width": 520,
+        "content": "## NeoTravel × n8n — Orchestration\n\nCe workflow appelle les **mêmes endpoints** que le chat et l'admin via `/api/n8n/*`.\n\n💾 **Persistance** : pas de nœud Airtable dans n8n — l'API NeoTravel persiste en **Airtable** en prod (`AIRTABLE_*` sur Vercel).\n\n### Chaîne démo jury (▶ Démo jury)\n1. GET `/api/n8n/status` — santé + relances en attente\n2. POST `/api/n8n/qualifier` — Paris → Lyon (35 pax)\n3. IF `pret_pour_devis` (demande complète)\n4. POST `/api/n8n/calculer-devis`\n5. POST `/api/n8n/generer-devis` — PDF + email client + **relances planifiées** (pas immédiates)\n6. POST `/api/n8n/relance` — traite uniquement les relances **échues** (`traitees: 0` juste après generer = normal)\n\n**Demande incomplète** → email client avec lien formulaire `/devis` (si email présent) + résumé n8n (pas de relance devis).\n\n### Branche planifiée (15 min)\nGET status → POST relance (relances dues uniquement).\n\n### Relances (comportement app)\n- Planifiées **après** `generer-devis` complet (email client uniquement)\n- Jamais sur demande incomplète\n- J+2 / J+7 (prod) ou +2 / +7 min si `DEMO_MODE=true`\n- **Annulées** si admin clôture / accepte / refuse (`annulerRelancesDemande`)\n- Admin `/admin` : boutons accepter, refuser, clôturer, rouvrir\n\n⚠️ **Config NeoTravel** : coller `WEBHOOK_SECRET` (ex. dev `neotravel-dev-secret`) — **pas** `VERCEL_TOKEN` (`vcp_…`).\n\n🔗 App : https://neotravel-app-gamma.vercel.app",
+        "height": 580,
+        "width": 540,
         "color": 4
       },
       "id": "sticky-architecture",
-      "name": "Architecture Option A",
+      "name": "Architecture NeoTravel",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [-640, -120]
@@ -77,7 +77,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/status",
+        "url": "={{ $('Config NeoTravel').item.json.api_base }}/status",
         "options": {
           "response": { "response": { "fullResponse": true, "neverError": true } }
         }
@@ -112,7 +112,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/qualifier",
+        "url": "={{ $('Config NeoTravel').item.json.api_base }}/qualifier",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -155,7 +155,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/calculer-devis",
+        "url": "={{ $('Config NeoTravel').item.json.api_base }}/calculer-devis",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -177,7 +177,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/generer-devis",
+        "url": "={{ $('Config NeoTravel').item.json.api_base }}/generer-devis",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -206,7 +206,7 @@
             {
               "id": "inc-msg",
               "name": "message",
-              "value": "={{ $json.error ? ('Erreur API : ' + $json.error + ' — vérifier WEBHOOK_SECRET dans Config NeoTravel') : ('Demande incomplète — champs manquants : ' + ($json.missing || $json.champs_manquants || []).join(', ')) }}",
+              "value": "={{ $json.error || $json.erreur ? ('Erreur API : ' + ($json.error || $json.erreur) + ' — vérifier WEBHOOK_SECRET (pas VERCEL_TOKEN) dans Config NeoTravel') : ('Demande incomplète — pas de relance. Champs manquants : ' + ($json.missing || $json.champs_manquants || []).join(', ')) }}",
               "type": "string"
             }
           ]
@@ -221,7 +221,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://neotravel-app-gamma.vercel.app/api/n8n/relance",
+        "url": "={{ $('Config NeoTravel').item.json.api_base }}/relance",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -243,7 +243,7 @@
     },
     {
       "parameters": {
-        "jsCode": "function nodeJson(name) {\n  const n = $(name);\n  if (!n.isExecuted) return null;\n  const item = n.first();\n  return item ? item.json : null;\n}\n\nconst config = nodeJson('Config NeoTravel') ?? {};\nconst status = nodeJson('GET status');\nconst qualifier = nodeJson('POST qualifier');\nconst calculer = nodeJson('POST calculer-devis');\nconst generer = nodeJson('POST generer-devis');\nconst relance = nodeJson('POST relance');\nconst incomplete = nodeJson('Demande incomplète');\nconst isDemo = $('▶ Démo jury').isExecuted;\n\nreturn [{\n  json: {\n    execution_summary: {\n      at: new Date().toISOString(),\n      service: 'neotravel-orchestration',\n      mode: isDemo ? 'demo_jury' : 'schedule_relances',\n      app_url: config.app_url,\n      api_reachable: status?.ok === true || status?.body?.ok === true,\n      pending_relances: status?.pending_relances ?? status?.body?.pending_relances ?? null,\n      qualifier: qualifier ? {\n        demande_id: qualifier.demande_id,\n        pret_pour_devis: qualifier.pret_pour_devis,\n        score: qualifier.score_completude,\n        error: qualifier.error ?? null,\n        missing: qualifier.missing ?? qualifier.champs_manquants ?? null\n      } : null,\n      incomplete_message: incomplete?.message ?? null,\n      calcul: calculer?.prix_ttc ? { prix_ttc: calculer.prix_ttc, prix_ht: calculer.prix_ht } : (calculer?.erreur ? { error: calculer.erreur } : null),\n      devis: generer?.devis_id ? {\n        devis_id: generer.devis_id,\n        prix_ttc: generer.prix_ttc,\n        email_sent: generer.email_sent\n      } : null,\n      relances: {\n        ok: relance?.ok ?? null,\n        traitees: relance?.traitees ?? 0\n      }\n    }\n  }\n}];"
+        "jsCode": "function nodeJson(name) {\n  const n = $(name);\n  if (!n.isExecuted) return null;\n  const item = n.first();\n  return item ? item.json : null;\n}\n\nconst config = nodeJson('Config NeoTravel') ?? {};\nconst status = nodeJson('GET status');\nconst qualifier = nodeJson('POST qualifier');\nconst calculer = nodeJson('POST calculer-devis');\nconst generer = nodeJson('POST generer-devis');\nconst relance = nodeJson('POST relance');\nconst incomplete = nodeJson('Demande incomplète');\nconst isDemo = $('▶ Démo jury').isExecuted;\n\nconst statusBody = status?.body ?? status;\nconst relanceTraitees = relance?.traitees ?? 0;\nconst devisGenere = !!generer?.devis_id;\n\nreturn [{\n  json: {\n    execution_summary: {\n      at: new Date().toISOString(),\n      service: 'neotravel-orchestration',\n      mode: isDemo ? 'demo_jury' : 'schedule_relances',\n      app_url: config.app_url,\n      storage_backend: statusBody?.storage_backend ?? null,\n      api_reachable: statusBody?.ok === true,\n      pending_relances_at_start: statusBody?.pending_relances ?? null,\n      qualifier: qualifier ? {\n        demande_id: qualifier.demande_id,\n        pret_pour_devis: qualifier.pret_pour_devis,\n        score: qualifier.score_completude,\n        error: qualifier.error ?? qualifier.erreur ?? null,\n        missing: qualifier.missing ?? qualifier.champs_manquants ?? null\n      } : null,\n      incomplete_message: incomplete?.message ?? null,\n      calcul: calculer?.prix_ttc ? { prix_ttc: calculer.prix_ttc, prix_ht: calculer.prix_ht } : (calculer?.erreur ? { error: calculer.erreur } : null),\n      devis: devisGenere ? {\n        devis_id: generer.devis_id,\n        prix_ttc: generer.prix_ttc,\n        email_sent: generer.email_sent,\n        relances_planifiees: generer.email_sent ? '2 relances client planifiées (échéance future)' : 'aucune (pas d\\'email client)'\n      } : null,\n      relances: relance ? {\n        ok: relance.ok ?? null,\n        traitees: relanceTraitees,\n        note: devisGenere && relanceTraitees === 0\n          ? 'Normal juste après generer-devis : relances pas encore échues (cron 15 min ou DEMO_MODE)'\n          : (incomplete ? 'Branche incomplète — relance non appelée' : null)\n      } : null\n    }\n  }\n}];"
       },
       "id": "code-summary",
       "name": "Résumé orchestration",
@@ -273,7 +273,7 @@
     },
     "POST calculer-devis": { "main": [[{ "node": "POST generer-devis", "type": "main", "index": 0 }]] },
     "POST generer-devis": { "main": [[{ "node": "POST relance", "type": "main", "index": 0 }]] },
-    "Demande incomplète": { "main": [[{ "node": "POST relance", "type": "main", "index": 0 }]] },
+    "Demande incomplète": { "main": [[{ "node": "Résumé orchestration", "type": "main", "index": 0 }]] },
     "POST relance": { "main": [[{ "node": "Résumé orchestration", "type": "main", "index": 0 }]] }
   },
   "active": false,
@@ -283,7 +283,7 @@
   },
   "meta": {
     "templateCredsSetupCompleted": true,
-    "description": "Orchestration complète NeoTravel : qualifier → calculer → generer → relance. Coller WEBHOOK_SECRET dans Config NeoTravel. Démo : ▶ Démo jury."
+    "description": "Orchestration NeoTravel via /api/n8n/* : qualifier → calculer → generer → relance (échues). Coller WEBHOOK_SECRET (ex. neotravel-dev-secret) dans Config NeoTravel — pas VERCEL_TOKEN. Démo : ▶ Démo jury."
   },
   "tags": []
 }

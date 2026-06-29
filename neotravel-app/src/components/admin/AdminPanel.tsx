@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SiteFooter, SiteHeader } from "@/components/layout/SiteChrome";
-import type { Demande, Devis, DashboardStats } from "@/lib/types";
+import type { Demande, Devis, DashboardStats, StatutDemande } from "@/lib/types";
+import { isStatutDemandeFinal } from "@/lib/types";
 
 const STATUT: Record<string, string> = {
   nouveau: "Nouveau",
@@ -41,6 +42,7 @@ export function AdminPanel() {
   );
   const [storageBackend, setStorageBackend] = useState<"airtable" | "file" | null>(null);
   const [relanceBusy, setRelanceBusy] = useState(false);
+  const [statutBusy, setStatutBusy] = useState<string | null>(null);
 
   const load = async () => {
     const res = await fetch("/api/admin", { cache: "no-store" });
@@ -62,6 +64,21 @@ export function AdminPanel() {
     });
     await load();
     setRelanceBusy(false);
+  };
+
+  const changerStatut = async (demandeId: string, statut: StatutDemande) => {
+    setStatutBusy(demandeId);
+    await fetch("/api/admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "update_demande_statut",
+        demande_id: demandeId,
+        statut,
+      }),
+    });
+    await load();
+    setStatutBusy(null);
   };
 
   useEffect(() => {
@@ -246,6 +263,61 @@ export function AdminPanel() {
                   {d.cas_complexe && d.motif_complexe && (
                     <p className="mt-2 text-xs text-amber-700">Escalade : {d.motif_complexe}</p>
                   )}
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+                    <span className="text-xs text-gray-400">État :</span>
+                    {isStatutDemandeFinal(d.statut) ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={statutBusy === d.id}
+                          onClick={() => changerStatut(d.id, "devis_envoye")}
+                          className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          {statutBusy === d.id ? "…" : "rouvrir (devis envoyé)"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={statutBusy === d.id}
+                          onClick={() => changerStatut(d.id, "relance_1")}
+                          className="rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          rouvrir (relance 1)
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {dv && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={statutBusy === d.id}
+                              onClick={() => changerStatut(d.id, "accepte")}
+                              className="rounded border border-green-700 bg-green-700 px-2 py-0.5 text-xs text-white hover:bg-green-800 disabled:opacity-50"
+                            >
+                              accepter
+                            </button>
+                            <button
+                              type="button"
+                              disabled={statutBusy === d.id}
+                              onClick={() => changerStatut(d.id, "refuse")}
+                              className="rounded border border-red-700 bg-red-700 px-2 py-0.5 text-xs text-white hover:bg-red-800 disabled:opacity-50"
+                            >
+                              refuser
+                            </button>
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          disabled={statutBusy === d.id}
+                          onClick={() => changerStatut(d.id, "cloture")}
+                          className="rounded border border-gray-800 bg-gray-800 px-2 py-0.5 text-xs text-white hover:bg-gray-900 disabled:opacity-50"
+                        >
+                          {statutBusy === d.id ? "…" : "clôturer"}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </article>
               );
             })}
