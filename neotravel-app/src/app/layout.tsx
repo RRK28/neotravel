@@ -2,18 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NeoTravel",
-  description: "Projet transport de groupe",
+  title: "NeoTravel — Devis transport autocar",
+  description:
+    "Plateforme de devis transport autocar automatisée — Groupe 16, Epitech 2026",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

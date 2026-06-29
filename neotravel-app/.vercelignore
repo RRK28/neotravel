@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+.data/
+.cloudflared-tunnel.log
+playwright-report/
+test-results/

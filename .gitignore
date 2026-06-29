@@ -4,3 +4,16 @@
 *.zip
 .venv/
 __pycache__/
+
+.env.n8n
+.n8n-tunnel.log
+.n8n-tunnel.pid
+.n8n-local.log
+.n8n-local.pid
+
+# Données locales / caches
+.data/
+neotravel-app/.data/
+neotravel-app/playwright-report/
+neotravel-app/test-results/
+neotravel-app/.cloudflared-tunnel.log

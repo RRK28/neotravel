@@ -73,40 +73,43 @@ On ne vise pas un ERP complet. L'objectif est un prototype démontrable de bout 
 
 ## 6. Parcours cible
 
-Flux nominal visé pour le MVP :
+Flux nominal visé pour le MVP (**Option A — parcours principal**) :
 
-1. **Demande** — Le prospect arrive sur la landing et ouvre le chat. Il décrit son trajet en langage naturel.
+1. **Demande** — Le prospect arrive sur la landing et ouvre le **chat IA** (CTA principal). Il décrit son trajet en langage naturel.
 2. **Qualification** — L'agent collecte les champs requis (lieux, dates, passagers, contact) via l'outil `qualifier_demande`. Les champs manquants sont demandés explicitement.
-3. **Devis** — Quand la demande est complète, l'agent appelle `calculer_devis()` puis `generer_devis()`. Le prospect reçoit le montant TTC et un lien vers le document.
+3. **Devis** — Quand la demande est complète, le back-office appelle `calculer_devis()` puis `generer_devis()`. Le prospect reçoit le montant TTC et un lien vers le document.
 4. **Relance** — Si pas de réponse, n8n déclenche des emails de relance (1re et 2e relance selon règles urgence).
 5. **Pilotage** — Le commercial consulte le dashboard : demandes en cours, devis envoyés, cas complexes, relances planifiées.
 
-**Parcours alternatif :** si la demande dépasse les seuils automatiques (> 85 passagers, > 800 km, options non standard), l'agent appelle `escalader_humain` et le statut passe en `cas_complexe`.
+**Parcours alternatif (Option B)** : formulaire guidé en 3 étapes sur `/devis` — même pipeline métier (`processDemandePipeline`), sans LLM.
+
+**Parcours escalade** : si la demande dépasse les seuils automatiques (> 85 passagers, > 800 km, options non standard), l'agent appelle `escalader_humain` et le statut passe en `cas_complexe`.
 
 **Statuts du pipeline :** nouveau → incomplet → qualifie → devis_envoye → relance_1 / relance_2 → accepte / refuse / cloture / cas_complexe
 
-## 7. Architecture fonctionnelle et technique (Option B)
+## 7. Architecture fonctionnelle et technique (Option A)
 
-Architecture retenue après lecture de la fiche technique NeoTravel (Option B) :
+Architecture retenue après lecture de la fiche technique NeoTravel (**Option A — chat IA principal**) :
 
 ```
-[Prospect] → Landing / Chat (Next.js)
-                ↓
-         Agent IA (Vercel AI SDK)
-                ↓ appels tools
-    ┌───────────┼───────────┐
-    ↓           ↓           ↓
-qualifier   calculer    generer
-_demande    _devis      _devis
-    ↓           ↓           ↓
-         Store (JSON / Supabase)
-                ↓
-         n8n (relances email)
-                ↓
-         Dashboard admin
+[Prospect] → /chat (Option A) ──→ Agent IA + tools ──┐
+                                                      ├──→ qualifier → calculer → generer → Store
+[Prospect] → /devis (Option B) ──→ processWizard ────┘         ↑
+                                                                 │
+                    n8n Cloud (orchestration) ──→ POST /api/n8n/* (mêmes tools REST)
+                                                                 │
+                                                         relances email
+                                                                 ↓
+                                                         Dashboard admin
 ```
 
-L'agent conversationnel est une couche d'orchestration : il dialogue avec le prospect et délègue toute logique métier à des outils typés. Il ne prend aucune décision tarifaire seul.
+**Option A** : l'agent conversationnel dialogue avec le prospect et délègue toute logique métier à des outils typés (`qualifier_demande`, `calculer_devis`, `generer_devis`).
+
+**Option B** : formulaire `/devis` sans LLM — même pipeline tarifaire (`processWizardDemande`).
+
+**n8n** : enchaîne les mêmes outils via l'API REST authentifiée (`/api/n8n/qualifier`, `/calculer-devis`, `/generer-devis`, `/relance`) pour la démo jury et les relances planifiées.
+
+L'IA ne prend aucune décision tarifaire seule.
 
 ## 8. Règle d'or : l'IA ne calcule jamais le prix
 
@@ -138,7 +141,7 @@ Les matrices tarifaires (saison, urgence, capacité, options, marge, TVA) sont c
 | Tests | Vitest + Playwright | Unitaires pricing + E2E parcours |
 | Déploiement | Vercel ou Docker local | Environnement de démo |
 
-n8n tourne en local via `docker-compose.yml`. Le webhook `/api/webhooks/relance` reçoit les déclenchements planifiés.
+n8n tourne en local via `docker-compose.yml` ou en Cloud (`app.n8n.cloud`). Il appelle `/api/n8n/*` (orchestration complète) et `/api/n8n/relance` (alias relances).
 
 ## 10. Planning prévisionnel
 
@@ -207,7 +210,7 @@ Chacun peut intervenir en appui sur les autres lots. Les points hebdomadaires pe
 **Contraintes :**
 
 - Délai projet : environ 4 semaines
-- Stack imposée par la fiche technique : Option B (Next.js + agent + n8n)
+- Stack imposée par la fiche technique : Next.js + agent IA + n8n (parcours **Option A** = chat `/chat` ; **Option B** = formulaire guidé `/devis` — ce ne sont pas des noms de stack)
 - Niveau attendu : prototype fonctionnel, pas production-ready
 - Soutenance Epitech : démo live du parcours + explication des choix techniques
 
