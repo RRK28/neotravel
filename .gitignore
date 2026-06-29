@@ -2,6 +2,7 @@
 *.pdf
 !docs/note-de-cadrage.pdf
 *.zip
+!NeoTravel-Groupe16-livrable.zip
 .venv/
 __pycache__/
 
