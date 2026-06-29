@@ -13,8 +13,8 @@ test.describe("Landing", () => {
       page.getByRole("heading", { name: /votre autocariste en 24 h/i }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: /qui sommes-nous/i }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: /devis/i }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: /admin/i }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /devis en ligne/i }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /formulaire/i }).first()).toBeVisible();
   });
 
   test("navigation vers le formulaire devis", async ({ page }) => {

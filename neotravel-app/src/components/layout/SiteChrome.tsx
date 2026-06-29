@@ -2,10 +2,9 @@ import Link from "next/link";
 
 const navLinks = [
   { href: "/", label: "Accueil" },
-  { href: "/qui-sommes-nous", label: "Qui sommes-nous" },
   { href: "/chat", label: "Devis en ligne" },
-  { href: "/devis", label: "Demande de devis" },
-  { href: "/admin", label: "Admin" },
+  { href: "/devis", label: "Formulaire" },
+  { href: "/qui-sommes-nous", label: "Qui sommes-nous" },
 ] as const;
 
 export function SiteHeader() {

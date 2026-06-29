@@ -4,7 +4,7 @@ export function AiPoweredBadge({ className = "" }: { className?: string }) {
       className={`inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-100 ${className}`}
     >
       <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" aria-hidden />
-      Devis instantané
+      Devis en ligne
     </span>
   );
 }

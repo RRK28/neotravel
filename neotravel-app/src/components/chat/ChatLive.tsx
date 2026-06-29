@@ -12,16 +12,10 @@ const EXAMPLES = [
   "Mariage à Bordeaux, 80 invités à transférer depuis la gare vers le domaine. Date : 5 septembre.",
 ];
 
-type LlmStatus = {
-  provider: "ollama" | "openai" | "none";
-  label: string;
-};
-
 export function ChatLive({ defaultDemo = false }: { defaultDemo?: boolean }) {
   const [sessionId] = useState(() => crypto.randomUUID());
-  const [llmStatus, setLlmStatus] = useState<LlmStatus | null>(null);
   const [demoMode, setDemoMode] = useState(defaultDemo);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,8 +29,7 @@ export function ChatLive({ defaultDemo = false }: { defaultDemo?: boolean }) {
     if (defaultDemo) return;
     fetch("/api/llm/status")
       .then((r) => r.json())
-      .then((s: LlmStatus) => {
-        setLlmStatus(s);
+      .then((s: { provider: string }) => {
         if (s.provider === "none") setDemoMode(true);
       })
       .catch(() => setDemoMode(true));
@@ -150,10 +143,10 @@ export function ChatLive({ defaultDemo = false }: { defaultDemo?: boolean }) {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setShowAdvanced((v) => !v)}
+                onClick={() => setShowSettings((v) => !v)}
                 className="text-xs text-slate-400 underline hover:text-slate-600"
               >
-                Options avancées
+                Paramètres
               </button>
               <button
                 type="submit"
@@ -165,8 +158,8 @@ export function ChatLive({ defaultDemo = false }: { defaultDemo?: boolean }) {
               </button>
             </div>
           </div>
-          {showAdvanced && (
-            <div className="mt-3 space-y-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+          {showSettings && (
+            <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
               <label className="flex items-center gap-2 text-xs text-slate-500">
                 <input
                   type="checkbox"
@@ -175,11 +168,6 @@ export function ChatLive({ defaultDemo = false }: { defaultDemo?: boolean }) {
                 />
                 Réponse guidée (hors ligne)
               </label>
-              {llmStatus && !demoMode && (
-                <p className="text-xs text-slate-400" data-testid="llm-provider-badge">
-                  Connexion : {llmStatus.label}
-                </p>
-              )}
             </div>
           )}
         </form>

@@ -1,7 +1,3 @@
-/**
- * Option A — parcours principal : assistant conversationnel.
- * Même pipeline métier que /devis (Option B) via processDemandePipeline.
- */
 import { ChatLive } from "@/components/chat/ChatLive";
 
 export default async function ChatPage({
