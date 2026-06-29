@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SiteFooter, SiteHeader } from "@/components/layout/SiteChrome";
-import { AiPoweredBadge } from "@/components/layout/AiPoweredBadge";
 import { DEVIS_IMAGES } from "@/lib/devis-images";
 
 const garanties = [
@@ -53,7 +52,7 @@ export default function HomePage() {
       <SiteHeader />
 
       <main>
-        <section className="relative overflow-hidden text-white">
+        <section className="relative min-h-[28rem] overflow-hidden text-white sm:min-h-[32rem]">
           <Image
             src={DEVIS_IMAGES.heroBackground}
             alt=""
@@ -62,9 +61,8 @@ export default function HomePage() {
             className="object-cover"
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-brand)]/95 via-[var(--color-brand)]/85 to-[var(--color-brand)]/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-brand)]/85 via-[var(--color-brand)]/50 to-black/35" />
           <div className="relative mx-auto max-w-3xl px-6 py-16 text-center sm:py-20">
-            <AiPoweredBadge className="mb-4" />
             <p className="text-sm font-medium uppercase tracking-widest text-amber-300">
               Location d&apos;autocar avec chauffeur — depuis 2010
             </p>
