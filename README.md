@@ -19,8 +19,10 @@ npm run dev
 
 | Document | Contenu |
 |----------|---------|
-| [**docs/mode-emploi.md**](docs/mode-emploi.md) | **Mode d'emploi complet** — architecture, parcours, API, n8n, déploiement |
-| [docs/mode-emploi.pdf](docs/mode-emploi.pdf) | Version PDF du mode d'emploi |
+| [**docs/mode-emploi-visuel.html**](docs/mode-emploi-visuel.html) | **Mode d'emploi visuel** — schémas couleur, lisible par tous (recommandé) |
+| [docs/mode-emploi-visuel.pdf](docs/mode-emploi-visuel.pdf) | Version PDF du mode d'emploi visuel |
+| [docs/mode-emploi.md](docs/mode-emploi.md) | Mode d'emploi texte (version simplifiée) |
+| [docs/mode-emploi.pdf](docs/mode-emploi.pdf) | Version PDF texte |
 | [neotravel-app/README.md](neotravel-app/README.md) | Lancement, variables d'env, architecture |
 | [docs/note-de-cadrage.md](docs/note-de-cadrage.md) | Cadrage métier (résumé) |
 | [docs/fiabilite.md](docs/fiabilite.md) | HITL, RGPD, pricing déterministe |

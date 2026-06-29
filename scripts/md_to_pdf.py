@@ -19,6 +19,7 @@ FONT = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
 
 MARGIN_MM = 20  # 2 cm
 HEADER_FOOTER_FONT_SIZE = 8
+_in_code_block = False
 
 
 class DocPDF(FPDF):
@@ -67,8 +68,27 @@ def mc(pdf: DocPDF, h: float, text: str) -> None:
     pdf.multi_cell(pdf.epw, h, text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
 
+_in_code_block = False
+
+
 def write_line(pdf: DocPDF, line: str) -> None:
+    global _in_code_block
     line = line.rstrip()
+
+    if line.startswith("```"):
+        _in_code_block = not _in_code_block
+        if _in_code_block:
+            pdf.ln(2)
+        else:
+            pdf.ln(3)
+        return
+
+    if _in_code_block:
+        pdf.set_font("Doc", "", 8)
+        pdf.set_text_color(30, 30, 30)
+        mc(pdf, 4, line if line else " ")
+        return
+
     if not line:
         pdf.ln(3)
         return
@@ -133,6 +153,9 @@ def clean_md(text: str) -> str:
 
 
 def main() -> int:
+    global _in_code_block
+    _in_code_block = False
+
     md_path = Path(sys.argv[1]) if len(sys.argv) > 1 else MD_PATH
     pdf_path = Path(sys.argv[2]) if len(sys.argv) > 2 else PDF_PATH
 

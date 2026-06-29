@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeoTravel — Mode d'emploi visuel</title>
+  <style>
+    :root {
+      --blue: #1e5a8a;
+      --blue-light: #e8f4fc;
+      --green: #2d7a4f;
+      --green-light: #e6f5ec;
+      --orange: #c45c00;
+      --orange-light: #fff3e6;
+      --purple: #5c3d8a;
+      --purple-light: #f0ebf8;
+      --gray: #555;
+      --gray-light: #f5f5f5;
+      --border: #ccc;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      color: #222;
+      background: #fafafa;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 3px solid var(--blue);
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: var(--blue);
+      margin-bottom: 0.5rem;
+    }
+
+    header .subtitle {
+      color: var(--gray);
+      font-size: 1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--blue-light);
+      color: var(--blue);
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+    }
+
+    section {
+      margin-bottom: 2.5rem;
+      page-break-inside: avoid;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      color: var(--blue);
+      margin-bottom: 1rem;
+      padding-left: 0.75rem;
+      border-left: 4px solid var(--blue);
+    }
+
+    p, li { margin-bottom: 0.6rem; }
+
+    .rule-box {
+      background: var(--orange-light);
+      border: 2px solid var(--orange);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      font-size: 1.05rem;
+    }
+
+    .rule-box strong { color: var(--orange); }
+
+    /* Diagram containers */
+    .diagram {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.25rem 0;
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+
+    .diagram-title {
+      font-weight: 600;
+      color: var(--gray);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+
+    /* Flex row diagrams */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .block {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 500;
+      min-width: 110px;
+      border: 2px solid transparent;
+    }
+
+    .block-blue { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+    .block-green { background: var(--green-light); border-color: var(--green); color: var(--green); }
+    .block-orange { background: var(--orange-light); border-color: var(--orange); color: var(--orange); }
+    .block-purple { background: var(--purple-light); border-color: var(--purple); color: var(--purple); }
+    .block-gray { background: var(--gray-light); border-color: #999; color: #333; }
+
+    .arrow {
+      font-size: 1.5rem;
+      color: var(--gray);
+      flex-shrink: 0;
+    }
+
+    /* Vertical flow */
+    .flow-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .flow-col .arrow { transform: rotate(90deg); }
+
+    /* Grid architecture */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .arch-layer {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .arch-layer-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+
+    .arch-blocks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    /* Pricing steps */
+    .pricing-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .pricing-step {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 1rem;
+      background: var(--gray-light);
+      border-radius: 6px;
+      border-left: 4px solid var(--green);
+    }
+
+    .pricing-step .num {
+      background: var(--green);
+      color: white;
+      width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Roles table visual */
+    .roles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .role-card {
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .role-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .role-card ul { list-style: none; font-size: 0.85rem; text-align: left; }
+    .role-card li::before { content: "✓ "; color: inherit; }
+    .role-card .forbidden { margin-top: 0.5rem; font-size: 0.8rem; font-weight: 600; opacity: 0.85; }
+
+    .role-ia { background: var(--purple-light); border: 2px solid var(--purple); color: var(--purple); }
+    .role-code { background: var(--green-light); border: 2px solid var(--green); color: var(--green); }
+    .role-n8n { background: var(--orange-light); border: 2px solid var(--orange); color: var(--orange); }
+
+    /* Relance timeline */
+    .timeline {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0;
+    }
+
+    .timeline-item {
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+      padding: 1rem 0.5rem;
+      position: relative;
+    }
+
+    .timeline-item .dot {
+      width: 2rem;
+      height: 2rem;
+      background: var(--blue);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .timeline-item:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -0.5rem;
+      top: 1.6rem;
+      font-size: 1.2rem;
+      color: var(--gray);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+
+    th { background: var(--blue-light); color: var(--blue); }
+
+    .n8n-box {
+      background: white;
+      border: 2px solid var(--orange);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+
+    .n8n-box p {
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .n8n-box p::before {
+      content: attr(data-n);
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+      color: var(--orange);
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--gray);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 600px) {
+      .roles { grid-template-columns: 1fr; }
+      .timeline-item:not(:last-child)::after { display: none; }
+    }
+
+    @media print {
+      body { background: white; padding: 0; max-width: 100%; }
+      .diagram { box-shadow: none; page-break-inside: avoid; }
+      section { page-break-inside: avoid; }
+      header { border-bottom-color: #000; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>NeoTravel — Mode d'emploi</h1>
+  <p class="subtitle">Comment le système traite une demande de devis autocar</p>
+  <span class="badge">Groupe 16 · Epitech 230 · juin 2026</span>
+</header>
+
+<section id="resume">
+  <h2>En une phrase</h2>
+  <p>NeoTravel aide une entreprise de transport en autocar à <strong>répondre plus vite</strong> aux demandes de devis : le client décrit son trajet, le système calcule un prix fiable, envoie le devis par e-mail et relance si besoin.</p>
+
+  <div class="rule-box">
+    <strong>Règle d'or :</strong> L'intelligence artificielle discute avec le client. Le prix est toujours calculé par le programme, <em>jamais</em> par l'IA.
+  </div>
+</section>
+
+<section id="devis">
+  <h2>Comment un client demande un devis</h2>
+  <p>Deux portes d'entrée mènent au même résultat :</p>
+
+  <div class="diagram">
+    <div class="diagram-title">Choix du parcours client</div>
+    <div class="flow-row">
+      <div class="block block-blue">Client<br><small>prospect</small></div>
+      <span class="arrow">→</span>
+      <div class="block block-gray">Site web<br><small>neotravel-app</small></div>
+      <span class="arrow">→</span>
+      <div class="block block-purple">Chat IA<br><small>recommandé</small></div>
+      <span style="color:#999;margin:0 0.25rem">ou</span>
+      <div class="block block-purple">Formulaire<br><small>3 étapes</small></div>
+    </div>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Parcours complet — de la demande au devis PDF</div>
+    <div class="flow-col">
+      <div class="block block-blue" style="min-width:200px">Client décrit son trajet</div>
+      <span class="arrow">↓</span>
+      <div class="block block-purple" style="min-width:200px">Assistant ou formulaire collecte les infos</div>
+      <span class="arrow">↓</span>
+      <div class="block block-gray" style="min-width:200px">Infos complètes ?<br><small>sinon → questions</small></div>
+      <span class="arrow">↓</span>
+      <div class="block block-green" style="min-width:200px">Calcul du prix (programme)</div>
+      <span class="arrow">↓</span>
+      <div class="block block-green" style="min-width:200px">Devis PDF + e-mail au client</div>
+      <span class="arrow">↓</span>
+      <div class="block block-orange" style="min-width:200px">Relances programmées</div>
+    </div>
+  </div>
+
+  <p><strong>Cas particulier :</strong> plus de 85 passagers ou plus de 800 km → un conseiller humain reprend le dossier.</p>
+</section>
+
+<section id="prix">
+  <h2>Comment le prix est calculé</h2>
+  <p>Le montant vient d'un <strong>programme à règles fixes</strong>, pas de l'IA. Mêmes données = même prix, toujours.</p>
+
+  <div class="diagram">
+    <div class="diagram-title">Les 7 étapes du calcul</div>
+    <div class="pricing-steps">
+      <div class="pricing-step"><span class="num">1</span> Base = distance (km) × 2,50 € — minimum 450 €</div>
+      <div class="pricing-step"><span class="num">2</span> × coefficient saison (été + cher, hiver −7 %)</div>
+      <div class="pricing-step"><span class="num">3</span> × coefficient urgence (départ &lt; 7 jours +10 %)</div>
+      <div class="pricing-step"><span class="num">4</span> × coefficient taille du groupe (petit bus −5 %, gros +40 %)</div>
+      <div class="pricing-step"><span class="num">5</span> + options (guide, nuit chauffeur, péages)</div>
+      <div class="pricing-step"><span class="num">6</span> + marge commerciale 15 %</div>
+      <div class="pricing-step"><span class="num">7</span> + TVA 10 %</div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Exemple Paris → Lyon, 35 pax, 15 juillet</th><th>Montant</th></tr>
+    <tr><td>Base 465 km × 2,50 €</td><td>~1 162 €</td></tr>
+    <tr><td>Ajustements saison / urgence / capacité</td><td>variable</td></tr>
+    <tr><td>Marge 15 % + TVA 10 %</td><td>sur le total</td></tr>
+    <tr><td><strong>Total TTC typique</strong></td><td><strong>~1 520 €</strong></td></tr>
+  </table>
+
+  <div class="diagram">
+    <div class="diagram-title">Qui fait quoi ?</div>
+    <div class="roles">
+      <div class="role-card role-ia">
+        <h3>IA (dialogue)</h3>
+        <ul>
+          <li>Parle au client</li>
+          <li>Demande les infos manquantes</li>
+          <li>Choisit la prochaine action</li>
+        </ul>
+        <div class="forbidden">✗ Ne calcule jamais le prix</div>
+      </div>
+      <div class="role-card role-code">
+        <h3>Programme (outils)</h3>
+        <ul>
+          <li>Calcule le prix exact</li>
+          <li>Crée le PDF devis</li>
+          <li>Enregistre en base</li>
+        </ul>
+        <div class="forbidden">✓ Seul à donner un montant</div>
+      </div>
+      <div class="role-card role-n8n">
+        <h3>n8n (robot)</h3>
+        <ul>
+          <li>Relances à date fixe</li>
+          <li>E-mails automatiques</li>
+          <li>Démo jury en 1 clic</li>
+        </ul>
+        <div class="forbidden">✗ Ne parle pas au client</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="relances">
+  <h2>Comment les relances fonctionnent</h2>
+  <p>Après l'envoi du devis, si le client ne répond pas, le système envoie des rappels automatiques.</p>
+
+  <div class="diagram">
+    <div class="diagram-title">Chronologie des relances</div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="dot">📄</div>
+        <strong>Devis envoyé</strong>
+      </div>
+      <div class="timeline-item">
+        <div class="dot">1</div>
+        <strong>Relance 1</strong><br><small>J+2 ou J+3</small>
+      </div>
+      <div class="timeline-item">
+        <div class="dot">2</div>
+        <strong>Relance 2</strong><br><small>J+7</small>
+      </div>
+      <div class="timeline-item">
+        <div class="dot">✕</div>
+        <strong>Clôture</strong><br><small>sans réponse</small>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Type</th><th>1re relance</th><th>2e relance</th><th>Ensuite</th></tr>
+    <tr><td>Urgente</td><td>J+2</td><td>—</td><td>Clôture</td></tr>
+    <tr><td>Standard</td><td>J+3</td><td>J+7</td><td>Clôture</td></tr>
+  </table>
+
+  <p><em>En démo jury : délais raccourcis à 2 et 4 minutes.</em></p>
+  <p>L'équipe suit tout sur la page <strong>Admin</strong> : demandes, devis, relances en attente.</p>
+</section>
+
+<section id="n8n">
+  <h2>Rôle de n8n (en 3 phrases)</h2>
+  <div class="n8n-box">
+    <p data-n="1."><strong>n8n</strong> est un outil d'automatisation en arrière-plan : il ne parle pas au client sur le site web.</p>
+    <p data-n="2.">Toutes les <strong>15 minutes</strong>, il vérifie s'il y a des relances à envoyer et déclenche les e-mails.</p>
+    <p data-n="3.">Pour la <strong>démo jury</strong>, un bouton dans n8n enchaîne toute la chaîne (qualification → prix → devis → relance).</p>
+  </div>
+</section>
+
+<section id="architecture">
+  <h2>Architecture Option B — pour des humains</h2>
+  <p>La fiche technique Interstellabs décrit l'<strong>Option B</strong> : l'assistant intelligent vit <strong>dans le site web</strong>, pas dans n8n.</p>
+
+  <div class="diagram">
+    <div class="diagram-title">Les 5 briques du système</div>
+    <div class="arch-grid">
+      <div class="arch-layer" style="border-color: var(--blue)">
+        <div class="arch-layer-label">Site web — ce que voient clients et commerciaux</div>
+        <div class="arch-blocks">
+          <div class="block block-blue">Accueil</div>
+          <div class="block block-purple">Chat IA</div>
+          <div class="block block-purple">Formulaire</div>
+          <div class="block block-blue">Admin</div>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--gray);font-size:1.2rem">↓ appelle ↓</div>
+      <div class="arch-layer" style="border-color: var(--green)">
+        <div class="arch-layer-label">Outils métier — exécution</div>
+        <div class="arch-blocks">
+          <div class="block block-green">Calcul prix</div>
+          <div class="block block-green">PDF devis</div>
+          <div class="block block-green">Enregistrement</div>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--gray);font-size:1.2rem">↓ communique avec ↓</div>
+      <div class="arch-layer" style="border-color: var(--orange)">
+        <div class="arch-layer-label">Services externes</div>
+        <div class="arch-blocks">
+          <div class="block block-gray">Fichier données</div>
+          <div class="block block-gray">E-mails (Resend)</div>
+          <div class="block block-orange">n8n (relances)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Terme</th><th>Signification</th></tr>
+    <tr><td>Option A (parcours client)</td><td>Chat conversationnel</td></tr>
+    <tr><td>Option B (parcours client)</td><td>Formulaire guidé</td></tr>
+    <tr><td>Option B (architecture)</td><td><strong>Notre choix</strong> — IA dans le site web</td></tr>
+    <tr><td>Option A (architecture)</td><td>Alternative non retenue — n8n comme cerveau</td></tr>
+  </table>
+</section>
+
+<section id="statuts">
+  <h2>Statuts d'une demande</h2>
+  <div class="diagram">
+    <div class="flow-row" style="flex-wrap:wrap">
+      <div class="block block-gray">nouveau</div>
+      <span class="arrow">→</span>
+      <div class="block block-gray">incomplet</div>
+      <span class="arrow">→</span>
+      <div class="block block-blue">qualifié</div>
+      <span class="arrow">→</span>
+      <div class="block block-green">devis envoyé</div>
+      <span class="arrow">→</span>
+      <div class="block block-orange">relances</div>
+      <span class="arrow">→</span>
+      <div class="block block-gray">clôturé / accepté / refusé</div>
+    </div>
+    <p style="margin-top:1rem;text-align:center"><em>Cas complexe (&gt;85 pax ou &gt;800 km) → reprise humaine à tout moment</em></p>
+  </div>
+</section>
+
+<section id="liens">
+  <h2>Liens utiles</h2>
+  <table>
+    <tr><th>Ressource</th><th>Adresse</th></tr>
+    <tr><td>Site</td><td>neotravel-app-gamma.vercel.app</td></tr>
+    <tr><td>Chat</td><td>…/chat</td></tr>
+    <tr><td>Formulaire</td><td>…/devis</td></tr>
+    <tr><td>Tableau de bord</td><td>…/admin</td></tr>
+  </table>
+</section>
+
+<footer>
+  NeoTravel — Groupe 16 — Epitech 230 Master of Science — juin 2026
+</footer>
+
+</body>
+</html>
