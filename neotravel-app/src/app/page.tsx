@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { SiteFooter, SiteHeader } from "@/components/layout/SiteChrome";
 import { AiPoweredBadge } from "@/components/layout/AiPoweredBadge";
-import { HomeHeroSection } from "@/components/devis/HomeHeroSection";
 import { DEVIS_IMAGES } from "@/lib/devis-images";
 
 const garanties = [
@@ -48,7 +47,6 @@ export default function HomePage() {
       <SiteHeader />
 
       <main>
-        {/* Hero — Option A (chat IA) en premier */}
         <section className="relative overflow-hidden text-white">
           <Image
             src={DEVIS_IMAGES.heroBackground}
@@ -59,37 +57,31 @@ export default function HomePage() {
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-brand)]/95 via-[var(--color-brand)]/85 to-[var(--color-brand)]/70" />
-          <div className="relative mx-auto max-w-6xl px-6 py-12 sm:py-16">
-            <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-              <div>
-                <AiPoweredBadge className="mb-4" />
-                <p className="text-sm font-medium uppercase tracking-widest text-amber-300">
-                  Transport autocar avec chauffeur
-                </p>
-                <h1 className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
-                  Obtenez votre devis gratuitement et rapidement
-                </h1>
-                <p className="mt-5 text-lg leading-relaxed text-slate-200">
-                  NeoTravel automatise la qualification par IA, le calcul tarifaire déterministe et
-                  l&apos;envoi de devis pour vos transports en autocar.
-                </p>
-                <div className="mt-6 flex flex-wrap gap-4">
-                  <Link
-                    href="/chat"
-                    className="rounded-md bg-[var(--color-wizard)] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-violet-700"
-                  >
-                    Discuter avec l&apos;assistant IA
-                  </Link>
-                  <Link
-                    href="/devis"
-                    className="rounded-md border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                  >
-                    Formulaire devis rapide
-                  </Link>
-                </div>
-              </div>
-
-              <HomeHeroSection />
+          <div className="relative mx-auto max-w-3xl px-6 py-16 text-center sm:py-20">
+            <AiPoweredBadge className="mb-4" />
+            <p className="text-sm font-medium uppercase tracking-widest text-amber-300">
+              Transport autocar avec chauffeur
+            </p>
+            <h1 className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
+              Obtenez votre devis gratuitement et rapidement
+            </h1>
+            <p className="mt-5 text-lg leading-relaxed text-slate-200">
+              NeoTravel automatise la qualification par IA, le calcul tarifaire déterministe et
+              l&apos;envoi de devis pour vos transports en autocar.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <Link
+                href="/chat"
+                className="rounded-md bg-[var(--color-wizard)] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-violet-700"
+              >
+                Discuter avec l&apos;assistant IA
+              </Link>
+              <Link
+                href="/devis"
+                className="rounded-md border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Formulaire devis rapide
+              </Link>
             </div>
           </div>
         </section>
