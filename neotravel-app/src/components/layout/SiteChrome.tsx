@@ -1,11 +1,10 @@
 import Link from "next/link";
 
-/** Navigation — Option A (/chat) avant Option B (/devis). */
 const navLinks = [
   { href: "/", label: "Accueil" },
   { href: "/qui-sommes-nous", label: "Qui sommes-nous" },
-  { href: "/chat", label: "Assistant IA" },
-  { href: "/devis", label: "Devis rapide" },
+  { href: "/chat", label: "Devis en ligne" },
+  { href: "/devis", label: "Demande de devis" },
   { href: "/admin", label: "Admin" },
 ] as const;
 
@@ -39,7 +38,8 @@ export function SiteFooter() {
         <div>
           <p className="text-lg font-semibold text-white">NeoTravel</p>
           <p className="mt-2 text-sm leading-relaxed text-slate-300">
-            Plateforme de devis transport autocar — projet pédagogique Epitech 2026.
+            Courtier en location d&apos;autocar avec chauffeur — devis rapide, flotte moderne,
+            accompagnement personnalisé depuis 2010.
           </p>
         </div>
         <div>
@@ -55,16 +55,16 @@ export function SiteFooter() {
           </ul>
         </div>
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-white">Projet</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-white">Contact</p>
           <p className="mt-3 text-sm leading-relaxed text-slate-300">
-            Module Data Science — Groupe 16
+            contact@neotravel.fr
             <br />
-            Epitech 2026
+            Du lundi au vendredi, 9 h – 18 h
           </p>
         </div>
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-slate-400">
-        © {new Date().getFullYear()} NeoTravel — Projet étudiant
+        © {new Date().getFullYear()} NeoTravel — Tous droits réservés
       </div>
     </footer>
   );

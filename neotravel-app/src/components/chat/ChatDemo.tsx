@@ -17,7 +17,7 @@ interface Message {
 }
 
 const EXAMPLE =
-  "Bonjour, je souhaite un devis pour 35 personnes de Paris à Lyon le 15/07/2026, environ 460 km. Email : contact@monentreprise.fr";
+  "Bonjour, nous sommes 45 lycéens pour un voyage Paris → Versailles le 12 mars. Email : contact@lycee.fr";
 
 export function ChatDemo() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -49,19 +49,29 @@ export function ChatDemo() {
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
-        <h1 className="text-xl font-bold">Chat devis</h1>
-        <p className="mt-1 text-sm text-gray-500">Mode démo — qualification et devis sans modèle conversationnel</p>
+        <h1 className="text-xl font-bold text-[var(--color-brand)]">Parler à un conseiller</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Décrivez votre trajet et recevez une estimation personnalisée.
+        </p>
 
-        <div className="mt-6 min-h-[300px] rounded border border-gray-300 bg-white p-4">
+        <div className="mt-6 min-h-[300px] rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           {messages.length === 0 && (
-            <p className="text-sm text-gray-600">
-              Décrivez votre trajet (villes, date, passagers, km, email).
+            <p className="text-sm text-slate-600">
+              Indiquez villes, date, nombre de passagers et votre e-mail de contact.
             </p>
           )}
           {messages.map((m, i) => (
             <div key={i} className={`mb-4 text-sm ${m.role === "user" ? "text-right" : ""}`}>
-              <span className="text-xs text-gray-400">{m.role === "user" ? "vous" : "assistant"}</span>
-              <p className={`mt-1 whitespace-pre-wrap rounded px-3 py-2 ${m.role === "user" ? "ml-8 bg-blue-100" : "mr-8 bg-gray-100"}`}>
+              <span className="text-xs text-slate-400">
+                {m.role === "user" ? "Vous" : "Conseiller NeoTravel"}
+              </span>
+              <p
+                className={`mt-1 whitespace-pre-wrap rounded-lg px-3 py-2 ${
+                  m.role === "user"
+                    ? "ml-8 bg-[var(--color-brand)]/10 text-slate-800"
+                    : "mr-8 bg-slate-100 text-slate-800"
+                }`}
+              >
                 {m.text}
               </p>
             </div>
@@ -79,24 +89,27 @@ export function ChatDemo() {
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Votre message..."
+            placeholder="Ex. : 35 passagers, Paris → Lyon, le 15 juillet, contact@entreprise.fr"
             rows={3}
-            className="w-full rounded border border-gray-300 p-3 text-sm"
+            className="w-full rounded-lg border border-slate-200 p-3 text-sm focus:border-[var(--color-wizard)] focus:ring-2 focus:ring-violet-100"
           />
           <div className="mt-2 flex justify-between">
-            <Link href="/" className="text-sm text-gray-500 underline">
-              retour
+            <Link href="/" className="text-sm text-slate-500 underline hover:text-[var(--color-brand)]">
+              Retour à l&apos;accueil
             </Link>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => send(EXAMPLE)}
-                className="rounded border border-gray-400 px-3 py-1 text-sm"
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
               >
-                exemple
+                Exemple
               </button>
-              <button type="submit" className="rounded bg-gray-800 px-4 py-1 text-sm text-white">
-                envoyer
+              <button
+                type="submit"
+                className="rounded-lg bg-[var(--color-wizard)] px-4 py-1.5 text-sm font-semibold text-white"
+              >
+                Envoyer
               </button>
             </div>
           </div>

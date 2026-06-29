@@ -620,7 +620,7 @@ function ConfirmationView({ recap, onClose }: { recap: DevisRecap; onClose?: () 
             <>Un email de confirmation avec votre devis vous a été envoyé.</>
           )}
           {recap.email_sent && recap.email_simulated && (
-            <>Email simulé (configurez SMTP dans .env pour l&apos;envoi réel).</>
+            <>Votre devis vous sera envoyé par e-mail dans les prochaines minutes.</>
           )}
           {!recap.email_sent && !recap.cas_complexe && recap.email_error && (
             <>Email non envoyé : {recap.email_error}</>

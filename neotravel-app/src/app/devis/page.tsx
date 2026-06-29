@@ -1,7 +1,3 @@
-/**
- * Option B — parcours alternatif : formulaire guidé en 3 étapes.
- * Même pipeline métier que /chat (Option A) via processWizardDemande → processDemandePipeline.
- */
 import Link from "next/link";
 import Image from "next/image";
 import { SiteFooter, SiteHeader } from "@/components/layout/SiteChrome";
@@ -28,10 +24,9 @@ export default function DevisPage() {
               Demandez votre devis
             </h1>
             <p className="mt-2 text-slate-600">
-              <span className="font-medium text-slate-700">Option B</span> — formulaire guidé en 3
-              étapes. Parcours recommandé :{" "}
+              Formulaire en 3 étapes — réponse sous 24 h. Vous préférez échanger par message ?{" "}
               <Link href="/chat" className="font-semibold text-[var(--color-wizard)] hover:underline">
-                Option A — assistant IA
+                Devis en ligne
               </Link>
               .
             </p>

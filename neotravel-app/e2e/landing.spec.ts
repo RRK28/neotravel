@@ -10,27 +10,27 @@ test.describe("Landing", () => {
     await page.goto("/");
 
     await expect(
-      page.getByRole("heading", { name: /obtenez votre devis/i }),
+      page.getByRole("heading", { name: /votre autocariste en 24 h/i }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: /qui sommes-nous/i }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: /devis/i }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: /admin/i }).first()).toBeVisible();
   });
 
-  test("navigation vers le devis (Option B)", async ({ page }) => {
+  test("navigation vers le formulaire devis", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: /formulaire devis rapide/i }).first().click();
+    await page.getByRole("link", { name: /formulaire détaillé/i }).first().click();
     await expect(page).toHaveURL(/\/devis/);
     await expect(
       page.getByRole("heading", { name: /demandez votre devis/i }),
     ).toBeVisible();
   });
 
-  test("navigation vers le chat (Option A)", async ({ page }) => {
+  test("navigation vers le chat devis", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: /discuter avec l'assistant ia/i }).first().click();
+    await page.getByRole("link", { name: /obtenir mon devis/i }).first().click();
     await expect(page).toHaveURL(/\/chat/);
-    await expect(page.getByRole("heading", { name: /chat devis/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /parler à un conseiller/i })).toBeVisible();
   });
 
   test("navigation vers qui sommes-nous", async ({ page }) => {

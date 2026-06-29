@@ -6,39 +6,45 @@ import { DEVIS_IMAGES } from "@/lib/devis-images";
 
 const garanties = [
   {
-    title: "Réponse rapide",
-    text: "L'assistant IA qualifie votre demande et prépare un devis en quelques minutes, 24 h/24.",
+    title: "Réponse sous 24 h",
+    text: "Un conseiller étudie votre trajet et vous adresse un devis détaillé, même en dehors des horaires de bureau.",
   },
   {
-    title: "Tarification transparente",
-    text: "Calcul automatique basé sur la distance, le nombre de passagers et le type de véhicule.",
+    title: "Tarifs clairs",
+    text: "Prix calculé selon la distance, le nombre de passagers et le type de véhicule — sans surprise à la réservation.",
   },
   {
-    title: "Suivi des demandes",
-    text: "Chaque lead est enregistré et suivi jusqu'à l'envoi du devis et aux relances.",
+    title: "Réseau national",
+    text: "Autocars récents, chauffeurs professionnels et partenaires certifiés sur l'ensemble du territoire.",
   },
   {
-    title: "Conseil personnalisé",
-    text: "L'agent pose les bonnes questions pour proposer une offre adaptée à votre trajet.",
+    title: "Accompagnement sur mesure",
+    text: "Sorties scolaires, séminaires, mariages, transferts aéroport : nous adaptons l'offre à votre événement.",
   },
 ];
 
 const etapes = [
   {
     step: "1",
-    title: "Décrivez votre besoin",
-    text: "Via le chat IA (Option A) ou le formulaire guidé (Option B) : trajet, date, passagers, contact.",
+    title: "Décrivez votre trajet",
+    text: "Par message ou via le formulaire : villes, dates, nombre de passagers et vos coordonnées.",
   },
   {
     step: "2",
-    title: "Calcul tarifaire métier",
-    text: "Le back-office appelle calculer_devis — moteur déterministe, indépendant du LLM.",
+    title: "Étude de votre demande",
+    text: "Nos équipes vérifient la faisabilité, le véhicule adapté et établissent votre tarif.",
   },
   {
     step: "3",
-    title: "Devis PDF & relances",
-    text: "Envoi du devis par e-mail, relances automatiques et suivi dans le tableau de bord admin.",
+    title: "Devis par e-mail",
+    text: "Vous recevez un devis PDF. Un conseiller reste disponible pour ajuster les détails.",
   },
+];
+
+const trustSignals = [
+  { value: "15 ans", label: "d'expérience" },
+  { value: "500+", label: "trajets par an" },
+  { value: "24 h", label: "pour un premier retour" },
 ];
 
 export default function HomePage() {
@@ -60,40 +66,48 @@ export default function HomePage() {
           <div className="relative mx-auto max-w-3xl px-6 py-16 text-center sm:py-20">
             <AiPoweredBadge className="mb-4" />
             <p className="text-sm font-medium uppercase tracking-widest text-amber-300">
-              Transport autocar avec chauffeur
+              Location d&apos;autocar avec chauffeur — depuis 2010
             </p>
             <h1 className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
-              Obtenez votre devis gratuitement et rapidement
+              Votre autocariste en 24 h
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-slate-200">
-              NeoTravel automatise la qualification par IA, le calcul tarifaire déterministe et
-              l&apos;envoi de devis pour vos transports en autocar.
+              NeoTravel organise vos transports de groupe partout en France et en Belgique.
+              Devis gratuit, flotte moderne et équipe commerciale à votre écoute.
             </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-6">
+              {trustSignals.map((s) => (
+                <div key={s.label} className="text-center">
+                  <p className="text-2xl font-bold text-white">{s.value}</p>
+                  <p className="text-xs text-slate-300">{s.label}</p>
+                </div>
+              ))}
+            </div>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Link
                 href="/chat"
                 className="rounded-md bg-[var(--color-wizard)] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-violet-700"
               >
-                Discuter avec l&apos;assistant IA
+                Obtenir mon devis
               </Link>
               <Link
                 href="/devis"
                 className="rounded-md border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >
-                Formulaire devis rapide
+                Formulaire détaillé
               </Link>
             </div>
           </div>
         </section>
 
-        {/* Garanties / services */}
         <section className="bg-white py-16">
           <div className="mx-auto max-w-6xl px-6">
             <h2 className="text-center text-2xl font-bold text-[var(--color-brand)]">
               Pourquoi choisir NeoTravel ?
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-slate-600">
-              Une chaîne commerciale automatisée pour répondre à vos besoins de transport de groupe.
+              Courtier en transport autocar, nous mettons notre réseau de transporteurs au service
+              de vos déplacements professionnels et privés.
             </p>
             <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {garanties.map((g) => (
@@ -109,15 +123,13 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Comment ça marche */}
         <section className="bg-slate-100 py-16">
           <div className="mx-auto max-w-6xl px-6">
             <h2 className="text-center text-2xl font-bold text-[var(--color-brand)]">
-              Comment ça marche ?
+              Comment obtenir votre devis ?
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-slate-600">
-              L&apos;IA collecte le besoin → le back-office calcule le prix → vous recevez le devis
-              PDF par e-mail.
+              Trois étapes simples, sans engagement.
             </p>
             <div className="mt-10 grid gap-8 sm:grid-cols-3">
               {etapes.map((e) => (
@@ -133,47 +145,44 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* À propos (snippet) */}
         <section className="bg-white py-16">
           <div className="mx-auto max-w-6xl px-6">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 sm:p-10">
               <h2 className="text-2xl font-bold text-[var(--color-brand)]">Qui sommes-nous ?</h2>
               <p className="mt-4 max-w-3xl leading-relaxed text-slate-600">
-                NeoTravel est un projet développé par le <strong>Groupe 16</strong> dans le cadre du
-                module Data Science à <strong>Epitech</strong> (promotion 2026). Notre objectif :
-                démontrer comment l&apos;IA et l&apos;automatisation peuvent fluidifier la chaîne
-                commerciale d&apos;une plateforme de location d&apos;autocars — de la demande
-                initiale au devis PDF et aux relances.
+                Fondée en 2010, NeoTravel est un courtier spécialisé dans la location d&apos;autocars
+                avec chauffeur. Entreprises, associations, établissements scolaires et
+                particuliers nous confient chaque année leurs transferts, excursions et événements.
+                Notre métier : trouver le bon véhicule au bon prix, rapidement.
               </p>
               <Link
                 href="/qui-sommes-nous"
                 className="mt-6 inline-block text-sm font-semibold text-[var(--color-brand-light)] hover:underline"
               >
-                Découvrir l&apos;équipe et le projet →
+                En savoir plus sur NeoTravel →
               </Link>
             </div>
           </div>
         </section>
 
-        {/* CTA final */}
         <section className="bg-[var(--color-brand)] py-14 text-center text-white">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="text-2xl font-bold">Prêt à obtenir votre devis ?</h2>
+            <h2 className="text-2xl font-bold">Un projet de transport en tête ?</h2>
             <p className="mx-auto mt-3 max-w-lg text-slate-200">
-              Commencez par l&apos;assistant IA — ou utilisez le formulaire guidé si vous préférez.
+              Décrivez-nous votre besoin en quelques lignes — réponse garantie sous 24 h.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Link
                 href="/chat"
                 className="rounded-md bg-[var(--color-wizard)] px-8 py-3 text-sm font-semibold text-white shadow transition hover:bg-violet-700"
               >
-                Discuter avec l&apos;assistant IA
+                Parler à un conseiller
               </Link>
               <Link
                 href="/devis"
                 className="rounded-md border border-white/30 px-8 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >
-                Formulaire devis rapide
+                Formulaire détaillé
               </Link>
             </div>
           </div>

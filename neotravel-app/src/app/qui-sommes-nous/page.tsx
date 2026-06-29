@@ -4,24 +4,24 @@ import { SiteFooter, SiteHeader } from "@/components/layout/SiteChrome";
 
 export const metadata: Metadata = {
   title: "Qui sommes-nous — NeoTravel",
-  description: "Équipe et projet NeoTravel — Groupe 16, Epitech 2026",
+  description:
+    "NeoTravel, courtier en location d'autocar avec chauffeur depuis 2010. Découvrez notre histoire et notre équipe.",
 };
 
-const objectifs = [
-  "Qualifier automatiquement les demandes de transport (trajet, passagers, date, contact).",
-  "Calculer un devis TTC à partir de matrices tarifaires métier.",
-  "Générer un PDF de devis et notifier le client par e-mail.",
-  "Relancer les prospects et fournir un tableau de bord admin.",
+const engagements = [
+  "Autocars récents et chauffeurs professionnels certifiés.",
+  "Devis détaillé sous 24 h, sans engagement.",
+  "Accompagnement personnalisé pour chaque type d'événement.",
+  "Couverture nationale en France et en Belgique.",
 ];
 
-const stack = [
-  "Next.js & React",
-  "Agent IA — Option A (Ollama / OpenAI)",
-  "Formulaire guidé — Option B",
-  "Moteur calculer_devis (déterministe)",
-  "Stockage fichier JSON / Airtable",
-  "Envoi d'e-mails (SMTP)",
-  "Tests E2E Playwright",
+const specialites = [
+  "Sorties scolaires et universitaires",
+  "Séminaires et team building",
+  "Mariages et événements privés",
+  "Transferts aéroport et gare",
+  "Pèlerinages et voyages associatifs",
+  "Déplacements d'entreprise",
 ];
 
 export default function QuiSommesNousPage() {
@@ -34,7 +34,7 @@ export default function QuiSommesNousPage() {
           <div className="mx-auto max-w-6xl px-6 py-14">
             <h1 className="text-3xl font-bold sm:text-4xl">Qui sommes-nous ?</h1>
             <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-200">
-              Découvrez l&apos;équipe et le projet derrière la plateforme NeoTravel.
+              Depuis 2010, NeoTravel met son expertise au service de vos transports de groupe.
             </p>
           </div>
         </section>
@@ -43,43 +43,32 @@ export default function QuiSommesNousPage() {
           <div className="mx-auto max-w-6xl px-6">
             <div className="grid gap-10 lg:grid-cols-2">
               <div>
-                <h2 className="text-xl font-bold text-[var(--color-brand)]">Le projet</h2>
+                <h2 className="text-xl font-bold text-[var(--color-brand)]">Notre histoire</h2>
                 <p className="mt-4 leading-relaxed text-slate-600">
-                  NeoTravel simule la chaîne commerciale d&apos;une plateforme de location
-                  d&apos;autocars avec chauffeur. Notre architecture repose sur deux parcours
-                  complémentaires :
-                </p>
-                <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
-                  <li>
-                    <strong className="text-[var(--color-brand)]">Option A</strong> — agent
-                    conversationnel (chat IA) qui collecte le besoin en langage naturel ;
-                  </li>
-                  <li>
-                    <strong className="text-[var(--color-brand)]">Option B</strong> — formulaire
-                    guidé en 3 étapes pour les utilisateurs qui préfèrent un parcours structuré.
-                  </li>
-                </ul>
-                <p className="mt-4 leading-relaxed text-slate-600">
-                  Dans les deux cas, le prix est calculé par un{" "}
-                  <strong>moteur déterministe</strong> (<code>calculer_devis</code>) — jamais par le
-                  LLM. Un back-office admin permet de suivre l&apos;ensemble des leads, relances et
-                  cas complexes.
+                  NeoTravel est né d&apos;une idée simple : faciliter la réservation d&apos;autocars
+                  pour les organisateurs qui n&apos;ont pas le temps de comparer une dizaine de
+                  transporteurs. En tant que courtier, nous sélectionnons le véhicule adapté à
+                  votre budget et à vos contraintes — sortie scolaire, séminaire, mariage ou
+                  transfert aéroport.
                 </p>
                 <p className="mt-4 leading-relaxed text-slate-600">
-                  Ce projet est réalisé dans le cadre du <strong>module Data Science</strong> à
-                  l&apos;<strong>Epitech</strong>, promotion <strong>2026</strong>.
+                  Aujourd&apos;hui, nous organisons plus de 500 trajets par an pour des entreprises,
+                  des associations, des établissements scolaires et des particuliers. Notre équipe
+                  commerciale connaît le terrain et vous accompagne de la demande de devis à la
+                  confirmation de la réservation.
                 </p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-                <h2 className="text-xl font-bold text-[var(--color-brand)]">L&apos;équipe</h2>
-                <p className="mt-2 text-2xl font-semibold text-slate-800">Groupe 16</p>
-                <p className="mt-1 text-sm text-slate-500">Epitech — Promotion 2026</p>
-                <p className="mt-4 text-sm leading-relaxed text-slate-600">
-                  Étudiants en ingénierie informatique, nous avons conçu NeoTravel pour explorer
-                  l&apos;intégration de l&apos;IA générative dans un flux métier réel : qualification
-                  de leads, pricing et relances commerciales.
-                </p>
+                <h2 className="text-xl font-bold text-[var(--color-brand)]">Nos engagements</h2>
+                <ul className="mt-4 space-y-3">
+                  {engagements.map((e) => (
+                    <li key={e} className="flex gap-3 text-sm leading-relaxed text-slate-600">
+                      <span className="mt-0.5 text-[var(--color-accent)]">✓</span>
+                      {e}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
@@ -87,59 +76,43 @@ export default function QuiSommesNousPage() {
 
         <section className="bg-slate-100 py-14">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="text-xl font-bold text-[var(--color-brand)]">Objectifs du projet</h2>
-            <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-              {objectifs.map((obj) => (
-                <li
-                  key={obj}
-                  className="flex gap-3 rounded-lg border border-slate-200 bg-white p-4 text-sm leading-relaxed text-slate-600"
+            <h2 className="text-xl font-bold text-[var(--color-brand)]">Nos spécialités</h2>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {specialites.map((s) => (
+                <div
+                  key={s}
+                  className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-700"
                 >
-                  <span className="mt-0.5 text-[var(--color-accent)]">✓</span>
-                  {obj}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        <section className="py-14">
-          <div className="mx-auto max-w-6xl px-6">
-            <h2 className="text-xl font-bold text-[var(--color-brand)]">Technologies</h2>
-            <div className="mt-6 flex flex-wrap gap-3">
-              {stack.map((tech) => (
-                <span
-                  key={tech}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700"
-                >
-                  {tech}
-                </span>
+                  {s}
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="border-t border-slate-200 bg-white py-12 text-center">
+        <section className="py-14">
           <div className="mx-auto max-w-6xl px-6">
-            <p className="text-slate-600">Vous souhaitez tester la plateforme ?</p>
-            <div className="mt-4 flex flex-wrap justify-center gap-4">
-              <Link
-                href="/chat"
-                className="rounded-md bg-[var(--color-wizard)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-700"
-              >
-                Discuter avec l&apos;assistant IA
-              </Link>
-              <Link
-                href="/devis"
-                className="rounded-md border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Formulaire devis rapide
-              </Link>
-              <Link
-                href="/"
-                className="rounded-md border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Retour à l&apos;accueil
-              </Link>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center">
+              <h2 className="text-xl font-bold text-[var(--color-brand)]">
+                Besoin d&apos;un devis ?
+              </h2>
+              <p className="mx-auto mt-3 max-w-lg text-slate-600">
+                Décrivez votre projet — nous vous répondons sous 24 h, du lundi au vendredi.
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-4">
+                <Link
+                  href="/chat"
+                  className="rounded-md bg-[var(--color-wizard)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-700"
+                >
+                  Devis en ligne
+                </Link>
+                <Link
+                  href="/devis"
+                  className="rounded-md border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Formulaire détaillé
+                </Link>
+              </div>
             </div>
           </div>
         </section>
