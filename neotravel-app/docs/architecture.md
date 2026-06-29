@@ -1,80 +1,108 @@
-# Architecture NeoTravel — Option B (Vercel AI SDK)
+# Architecture NeoTravel
 
-Conforme à la fiche technique Interstellabs : l'agent conversationnel vit dans Next.js ; n8n gère les relances planifiées.
+> **Documentation complète :** [`docs/mode-emploi.md`](../../docs/mode-emploi.md) — schémas, API, n8n, déploiement, FAQ soutenance.
+
+## Nomenclature Option A / B
+
+| Sens | Option A | Option B |
+|------|----------|----------|
+| **Parcours utilisateur** | `/chat` — assistant IA (principal) | `/devis` — formulaire guidé (alternatif) |
+| **Architecture technique (fiche PDF)** | n8n comme cerveau (non retenu) | **Vercel AI SDK** dans Next.js (implémenté) |
 
 ## Vue d'ensemble
 
-| Brique | Technologie | Rôle |
-|--------|-------------|------|
-| Interface prospect | Next.js (`/`, `/chat`) | Landing + chat streaming |
-| Agent IA | Vercel AI SDK (`/api/chat`) | Dialogue + choix des outils |
-| Outils métier | TypeScript (`lib/agent/tools.ts`) | Prix, PDF, CRM, relances |
-| Stockage | JSON local (MVP) / Supabase (cible) | Demandes, devis, relances, logs |
-| Back-office | n8n | Relances automatiques à date fixe |
-| Pilotage | `/admin` | Dashboard KPIs et pipeline |
-
-**Option A vs Option B (fiche Interstellabs) :**
-
-- **Option A** : agent porté par n8n (workflows visuels).
-- **Option B (implémentée)** : agent dans Next.js via Vercel AI SDK ; n8n = relances uniquement.
-
-Le formulaire `/devis` est un **parcours alternatif sans LLM** (même pipeline métier), pas l'« Option B » de la fiche.
-
-## Flux principal (chat + agent)
+Deux entrées utilisateur → **un seul pipeline métier** → store JSON → admin + relances n8n.
 
 ```mermaid
-flowchart TB
-  Prospect["Prospect"] --> Landing["Landing + /chat"]
-  Landing --> Agent["Agent IA — Vercel AI SDK"]
-  Agent --> Tools["Tools TypeScript"]
-  Tools --> Q["qualifier_demande"]
-  Tools --> C["calculer_devis — code pur"]
-  Tools --> G["generer_devis + email PDF"]
-  Tools --> P["planifier_relance"]
-  Tools --> E["escalader_humain"]
-  Q --> Store["memory-store / Supabase"]
-  C --> Store
-  G --> Store
-  P --> Store
-  Store --> Admin["/admin"]
-  n8n["n8n — planifié"] --> Relance["POST /api/webhooks/relance"]
-  Relance --> Store
-  Relance --> Email["Brevo SMTP"]
+graph TB
+  subgraph Frontend["Next.js / Vercel"]
+    CHAT["/chat — Option A"]
+    DEVIS["/devis — Option B"]
+    ADMIN["/admin"]
+  end
+
+  subgraph Agent["Vercel AI SDK"]
+    LLM["LLM"] --> TOOLS["6 tools"]
+  end
+
+  subgraph Metier["TypeScript"]
+    CALC["calculer_devis ★"]
+  end
+
+  subgraph Back["Back-office"]
+    N8N["n8n Cloud"]
+    API["/api/n8n/*"]
+  end
+
+  CHAT --> LLM
+  DEVIS --> TOOLS
+  TOOLS --> CALC
+  N8N --> API --> CALC
+  CALC --> STORE["memory-store"]
+  STORE --> ADMIN
 ```
 
-## Parcours alternatif (formulaire `/devis`)
+## Flux Option A (chat)
 
 ```mermaid
 flowchart TB
-  Prospect["Prospect"] --> Devis["/devis — DevisWizard"]
+  Prospect --> Chat["/chat — ChatLive"]
+  Chat --> LLM["LLM Ollama / OpenAI"]
+  LLM --> Pipeline["processDemandePipeline / tools"]
+  Pipeline --> Q["qualifier"]
+  Q --> C["calculer_devis"]
+  C --> G["generer_devis + email PDF"]
+  G --> Store["Store JSON"]
+  Store --> Admin["/admin"]
+  Store --> Relances["Relances planifiées"]
+```
+
+## Flux Option B (formulaire)
+
+```mermaid
+flowchart TB
+  Prospect --> Devis["/devis — DevisWizard"]
   Devis --> Wizard["processWizardDemande"]
-  Wizard --> Pipeline["processDemandePipeline"]
-  Pipeline --> C["calculer_devis"]
+  Wizard --> C["calculer_devis"]
   C --> G["PDF + email + admin"]
 ```
 
-Pas de LLM : le wizard appelle directement le pipeline serveur.
+## Orchestration n8n
 
-## Rôle de n8n
+n8n orchestre la même chaîne via REST (`x-webhook-secret`) :
 
-**Rôle officiel (Option B) :** déclencher les relances planifiées via webhook.
+```mermaid
+flowchart LR
+  n8n["n8n Cloud / Docker"]
+  n8n --> Status["GET /api/n8n/status"]
+  n8n --> Qual["POST /api/n8n/qualifier"]
+  Qual --> Calc["POST /api/n8n/calculer-devis"]
+  Calc --> Gen["POST /api/n8n/generer-devis"]
+  Gen --> Rel["POST /api/n8n/relance"]
+  Qual --> Store["memory-store"]
+  Calc --> Store
+  Gen --> Store
+  Rel --> Store
+```
+
+Workflow : `n8n/workflows/neotravel-orchestration.json`
 
 | Route | Rôle |
 |-------|------|
-| `POST /api/webhooks/relance` | Traite les relances dues (J+2 / J+3 / J+7) |
-
-Workflow exporté : `n8n/workflows/relance-neotravel.json`.
-
-**Complément démo jury :** workflow d'orchestration (`n8n/workflows/neotravel-orchestration.json`) enchaîne les endpoints `/api/n8n/*` pour montrer la chaîne métier sans passer par le chat. Ce n'est pas le cœur de l'architecture Option B.
+| `GET /api/n8n/status` | Santé + relances en attente |
+| `POST /api/n8n/qualifier` | Parse / crée demande |
+| `POST /api/n8n/calculer-devis` | Moteur tarifaire déterministe |
+| `POST /api/n8n/generer-devis` | Devis + PDF + email |
+| `POST /api/n8n/relance` | Traite relances dues |
 
 ## Fournisseurs LLM
 
 | Environnement | Configuration | Fournisseur |
 |---------------|---------------|-------------|
-| Local dev | `LLM_PROVIDER=ollama` + Ollama démarré | Ollama |
-| Vercel prod | `LLM_PROVIDER=openai` + `OPENAI_API_KEY` | OpenAI |
-| Secours | `DEMO_MODE=true` | `/api/chat/demo` (pipeline sans modèle) |
+| Local dev | `LLM_PROVIDER=ollama` | Ollama |
+| Vercel prod | `LLM_PROVIDER=openai` + clé API | OpenAI |
+| Secours | `DEMO_MODE=true` ou `/chat?demo=1` | Pipeline sans LLM |
 
 ## Règle d'or
 
-L'IA décide et dialogue ; le code exécute. Seul `calculer_devis()` produit un prix. Voir `docs/note-de-cadrage.md` (sections 7 et 8).
+Le LLM **ne calcule jamais le prix**. Seul `calculerDevis()` dans `src/lib/pricing/calculer-devis.ts` produit un montant. Voir [`docs/mode-emploi.md`](../../docs/mode-emploi.md#5-moteur-tarifaire).

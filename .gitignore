@@ -1,6 +1,7 @@
 .DS_Store
 *.pdf
 !docs/note-de-cadrage.pdf
+!docs/mode-emploi.pdf
 *.zip
 !NeoTravel-Groupe16-livrable.zip
 .venv/

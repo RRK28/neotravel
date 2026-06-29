@@ -19,8 +19,10 @@ npm run dev
 
 | Document | Contenu |
 |----------|---------|
+| [**docs/mode-emploi.md**](docs/mode-emploi.md) | **Mode d'emploi complet** — architecture, parcours, API, n8n, déploiement |
+| [docs/mode-emploi.pdf](docs/mode-emploi.pdf) | Version PDF du mode d'emploi |
 | [neotravel-app/README.md](neotravel-app/README.md) | Lancement, variables d'env, architecture |
-| [docs/note-de-cadrage.md](docs/note-de-cadrage.md) | Cadrage métier |
+| [docs/note-de-cadrage.md](docs/note-de-cadrage.md) | Cadrage métier (résumé) |
 | [docs/fiabilite.md](docs/fiabilite.md) | HITL, RGPD, pricing déterministe |
 | [docs/cas-de-test.md](docs/cas-de-test.md) | Golden tests + E2E |
 | [docs/demo-soutenance.md](docs/demo-soutenance.md) | Script démo jury |
