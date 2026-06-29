@@ -1,6 +1,6 @@
 # Procédure d'usage quotidien — équipes NeoTravel
 
-Guide pour les **commerciaux et pilotes** NeoTravel utilisant le prototype au quotidien (rubrique L3 — Passation).
+Guide pour les **commerciaux et pilotes** NeoTravel utilisant le prototype au quotidien.
 
 ---
 

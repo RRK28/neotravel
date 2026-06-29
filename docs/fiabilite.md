@@ -15,7 +15,7 @@ Document de référence pour la rubrique **Fiabilité** (HITL, RGPD, prompt inje
 | `processWizardDemande()` | Idem pour le wizard — **sans LLM** |
 | Tool agent `calculer_devis` | Appelle la même fonction (mode agent legacy) ; note explicite dans `lookup_matrices` |
 
-Le system prompt (`src/lib/agent/system-prompt.ts`) impose de recopier les chiffres du **RÉSULTAT BACK-OFFICE** sans les modifier. En pratique, le parcours nominal utilise `directReply` : le client reçoit un texte généré par le serveur, pas par le LLM.
+Le system prompt (`src/lib/agent/system-prompt.ts`) impose de recopier les chiffres du **RÉSULTAT BACK-OFFICE** sans les modifier. En pratique, le parcours nominal utilise `directReply` : le client reçoit une réponse produite côté serveur, pas par le LLM.
 
 **Vérification :** `grep -r "calculerDevis\|calculer_devis" neotravel-app/src` — aucun appel depuis le provider LLM, uniquement pricing + tools + pipeline.
 

@@ -1,10 +1,6 @@
 # Backlog — NeoTravel (Groupe 16)
 
-Backlog simplifié pour la rubrique Agile. Pour un board visuel : importer ces colonnes dans GitHub Projects ou Notion.
-
-**Lien board suggéré :** créer un projet GitHub « NeoTravel » avec colonnes *À faire | En cours | Fait | Bloqué*.
-
----
+Backlog du sprint MVP NeoTravel.
 
 ## Fait (Done)
 
@@ -30,7 +26,6 @@ Backlog simplifié pour la rubrique Agile. Pour un board visuel : importer ces c
 |----|------------|----------|-------|
 | NEO-12 | Déploiement Vercel stable + env prod | P0 | Voir `neotravel-app/docs/DEPLOY-VERCEL.md` |
 | NEO-13 | Tunnel n8n opérationnel jour J | P0 | `scripts/n8n-online.sh` |
-| NEO-14 | Commits git lisibles sur toute la période | P1 | Revoir historique avant soutenance |
 
 ---
 

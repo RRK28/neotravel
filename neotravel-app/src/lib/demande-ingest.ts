@@ -171,7 +171,7 @@ export async function processDemandePipeline(
     if (last && isConversationalOnly(last)) {
       const est = estimerTrajet(demande.ville_depart!, demande.ville_arrivee!);
       return {
-        replyHint: `Le devis est déjà envoyé (${existingDevis.prix_ttc.toFixed(2)} € TTC, ${demande.ville_depart} → ${demande.ville_arrivee}${est ? `, ~${est.duree_heures} h` : ""}). Réponds à la question du client. Tu es NeoTravel, propulsé par Ollama llama3.2 en local. Ne répète pas tout le devis sauf si demandé.`,
+        replyHint: `Le devis est déjà envoyé (${existingDevis.prix_ttc.toFixed(2)} € TTC, ${demande.ville_depart} → ${demande.ville_arrivee}${est ? `, ~${est.duree_heures} h` : ""}). Réponds à la question du client. Tu es l'assistant NeoTravel. Ne répète pas tout le devis sauf si demandé.`,
       };
     }
     const est = estimerTrajet(demande.ville_depart!, demande.ville_arrivee!);

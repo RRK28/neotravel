@@ -86,5 +86,5 @@ ${d.nb_passagers} passagers, ${d.distance_km} km
 
 Devis TTC estimé : ${result.ttc.toFixed(2)} €
 
-(On enverra le détail par mail plus tard — c'est encore une version test.)`;
+Le détail complet vous sera envoyé par e-mail.`;
 }

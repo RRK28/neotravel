@@ -57,7 +57,7 @@ Montrer `docs/note-de-cadrage.md` ou le diagramme README.
 ### 2. Landing (30 s)
 
 1. Ouvrir `/` (Vercel ou local)
-2. Montrer le badge **Propulsé par IA** (si OpenAI/Ollama configuré)
+2. Montrer le badge **Assistant conversationnel** (si OpenAI/Ollama configuré)
 3. **CTA principal** : « Discuter avec l'assistant IA » → `/chat` (Option A)
 4. **CTA secondaire** : « Formulaire devis rapide » → `/devis` (Option B)
 5. Section **Comment ça marche** : IA collecte → `calculer_devis` → email PDF

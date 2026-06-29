@@ -1,6 +1,6 @@
 # Procédure de reprise — NeoTravel
 
-Document pour un développeur ou une équipe reprenant le projet après la soutenance (rubrique L3 — Passation).
+Document pour un développeur ou une équipe reprenant le projet après la soutenance.
 
 ---
 

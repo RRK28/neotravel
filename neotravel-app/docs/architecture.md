@@ -72,7 +72,7 @@ Workflow exporté : `n8n/workflows/neotravel-orchestration.json` (démo jury + r
 | Vercel prod | `LLM_PROVIDER=openai` + `OPENAI_API_KEY` | OpenAI |
 | Secours | Aucun LLM / `DEMO_MODE=true` | `/api/chat/demo` (pipeline sans modèle) |
 
-Badge « Propulsé par IA » affiché sur la landing lorsqu'Ollama ou OpenAI est disponible.
+Badge « Assistant conversationnel » affiché sur la landing lorsqu'Ollama ou OpenAI est disponible.
 
 ## Règle d'or
 

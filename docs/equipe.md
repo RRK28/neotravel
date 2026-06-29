@@ -17,21 +17,16 @@
 
 ---
 
-## Rituels Agile (léger)
+## Organisation
 
-| Rituel | Fréquence | Objectif |
-|--------|-----------|----------|
-| Point d'équipe | 2× / semaine | Avancement, blocages |
-| Revue backlog | Hebdo | Prioriser P0/P1 |
-| Rétro | Fin de sprint | Voir `docs/retro.md` |
-| Decision log | Continu | Voir `docs/decision-log.md` |
+- **Points d'équipe** : deux fois par semaine (Discord / Teams).
+- **Backlog** : `docs/backlog.md`.
+- **Décisions techniques** : `docs/decision-log.md`.
+- **Rétro** : `docs/retro.md`.
 
 ---
 
-## Contacts & outils
+## Outils
 
-- **Repo :** dépôt Git NeoTravel (monorepo : `neotravel-app/` + `docs/` + `n8n/`)
-- **Communication :** Discord / Teams équipe
-- **Board :** `docs/backlog.md` (+ GitHub Projects si configuré)
-
-Chacun peut intervenir en appui sur les lots des autres selon charge.
+- **Repo :** monorepo (`neotravel-app/` + `docs/` + `n8n/`)
+- **Board :** backlog markdown ; GitHub Projects si besoin.

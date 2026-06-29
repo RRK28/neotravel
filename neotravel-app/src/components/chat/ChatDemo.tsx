@@ -50,7 +50,7 @@ export function ChatDemo() {
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
         <h1 className="text-xl font-bold">Chat devis</h1>
-        <p className="mt-1 text-sm text-gray-500">Version test — logique simplifiée, pas encore branchée à l&apos;agent final</p>
+        <p className="mt-1 text-sm text-gray-500">Mode démo — qualification et devis sans modèle conversationnel</p>
 
         <div className="mt-6 min-h-[300px] rounded border border-gray-300 bg-white p-4">
           {messages.length === 0 && (

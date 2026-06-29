@@ -11,7 +11,7 @@ export async function AiPoweredBadge({ className = "" }: { className?: string })
       title={llm.label}
     >
       <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-400" aria-hidden />
-      Propulsé par IA
+      Assistant conversationnel
       <span className="font-normal text-violet-200/90">· {llm.label}</span>
     </span>
   );
