@@ -29,7 +29,11 @@ export interface Demande {
   ville_arrivee?: string;
   date_depart?: string;
   date_retour?: string;
+  /** Client n'a pas encore fixé la date. */
+  date_incertaine?: boolean;
   nb_passagers?: number;
+  /** Client n'a pas encore fixé le nombre de passagers. */
+  passagers_incertain?: boolean;
   type_trajet?: string;
   distance_km?: number;
   type_vehicule?: string;
@@ -79,10 +83,14 @@ export interface Devis extends DevisResult {
   created_at: string;
 }
 
+export type RelanceType = "devis" | "incomplet";
+
 export interface Relance {
   id: string;
   demande_id: string;
   numero: 1 | 2;
+  /** Type de relance : rappel devis ou complétion formulaire. Défaut : devis. */
+  type?: RelanceType;
   date_prevue: string;
   statut: "en_attente" | "envoyee" | "annulee";
   email_destinataire?: string;

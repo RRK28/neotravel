@@ -44,8 +44,8 @@ export function champsManquantsClient(d: Partial<Demande>): string[] {
   if (!d.email) missing.push("email");
   if (!d.ville_depart) missing.push("ville_depart");
   if (!d.ville_arrivee) missing.push("ville_arrivee");
-  if (!d.date_depart) missing.push("date_depart");
-  if (!d.nb_passagers) missing.push("nb_passagers");
+  if (!d.date_depart && !d.date_incertaine) missing.push("date_depart");
+  if (!d.nb_passagers && !d.passagers_incertain) missing.push("nb_passagers");
   return missing;
 }
 

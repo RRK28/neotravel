@@ -4,9 +4,11 @@ export type TypeClientForm = "particulier" | "entreprise";
 export interface DevisFormData {
   type_trajet: TypeTrajet;
   nb_passagers: number;
+  passagers_incertain: boolean;
   ville_depart: string;
   ville_arrivee: string;
   date_depart: string;
+  date_incertaine: boolean;
   date_retour: string;
   commentaire: string;
   photoName: string;
@@ -25,8 +27,12 @@ export interface DevisRecap {
   ville_depart: string;
   ville_arrivee: string;
   type_trajet: string;
-  nb_passagers: number;
-  date_depart: string;
+  nb_passagers?: number;
+  date_depart?: string;
+  date_incertaine?: boolean;
+  passagers_incertain?: boolean;
+  incomplet?: boolean;
+  champs_manquants?: string[];
   distance_km?: number;
   duree_heures?: number;
   prix_ttc?: number;
@@ -41,9 +47,11 @@ export interface DevisRecap {
 export const defaultFormData = (): DevisFormData => ({
   type_trajet: "aller_simple",
   nb_passagers: 20,
+  passagers_incertain: false,
   ville_depart: "",
   ville_arrivee: "",
   date_depart: "",
+  date_incertaine: false,
   date_retour: "",
   commentaire: "",
   photoName: "",

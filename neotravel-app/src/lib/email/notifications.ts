@@ -264,3 +264,86 @@ Vous pouvez aussi répondre directement à cet email avec les informations manqu
     error: result.error,
   };
 }
+
+export async function sendRelanceIncompleteEmail(
+  demande: Demande,
+  missing: string[],
+  numero: 1 | 2,
+  baseUrl?: string,
+): Promise<{ ok: boolean; simulated?: boolean; error?: string }> {
+  if (!demande.email) {
+    return { ok: false, error: "Pas d'email client" };
+  }
+
+  const appUrl = getAppBaseUrl(baseUrl);
+  const lienFormulaire = buildDevisFormUrl(demande, baseUrl);
+  const champsLisibles = missing.map((k) => LABEL_CHAMP_MANQUANT[k] ?? k);
+  const listeHtml = champsLisibles.map((c) => `<li>${c}</li>`).join("");
+  const listeTexte = champsLisibles.map((c) => `• ${c}`).join("\n");
+
+  const subject =
+    numero === 1
+      ? "NeoTravel — Rappel : complétez votre demande de devis"
+      : "NeoTravel — Dernière relance : votre demande est incomplète";
+
+  const corpsRelance =
+    numero === 1
+      ? "Nous n'avons pas encore reçu toutes les informations nécessaires pour établir votre devis autocar."
+      : "Dernière relance : sans ces informations, nous ne pourrons pas finaliser votre devis.";
+
+  const text = `${salutation(demande)}
+
+${corpsRelance}
+
+Il nous manque encore :
+${listeTexte}
+
+Complétez votre demande en quelques clics :
+${lienFormulaire}
+
+Vous pouvez aussi répondre directement à cet email avec les informations manquantes.
+
+— L'équipe NeoTravel`;
+
+  const html = `<!DOCTYPE html>
+<html lang="fr"><body style="font-family:Arial,sans-serif;max-width:560px;margin:32px auto;color:#1a1814">
+  <p>${salutation(demande)}</p>
+  <p>${corpsRelance}</p>
+  <p><strong>Informations encore nécessaires :</strong></p>
+  <ul>${listeHtml}</ul>
+  <p style="margin:24px 0">
+    <a href="${lienFormulaire}" style="display:inline-block;background:#6d28d9;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px;font-weight:600">
+      Compléter ma demande
+    </a>
+  </p>
+  <p style="font-size:13px;color:#5c574f">Ou répondez à cet email avec les détails manquants.</p>
+  <p style="font-size:12px;color:#5c574f;margin-top:32px">NeoTravel — transport de groupe · ${appUrl}</p>
+</body></html>`;
+
+  const result = await sendEmail({
+    to: demande.email,
+    subject,
+    html,
+    text,
+  });
+
+  await logAction(
+    result.ok ? "email_relance_incomplet_envoyee" : "email_relance_incomplet_erreur",
+    {
+      numero,
+      to: demande.email,
+      missing,
+      provider: result.provider,
+      simulated: result.simulated ?? false,
+      error: result.error,
+      lien_formulaire: lienFormulaire,
+    },
+    demande.id,
+  );
+
+  return {
+    ok: result.ok,
+    simulated: result.simulated,
+    error: result.error,
+  };
+}

@@ -4,7 +4,7 @@ import { calculerDevis, determinerUrgence } from "@/lib/pricing/calculer-devis";
 import { estimerTrajet } from "@/lib/pricing/estimer-trajet";
 import { sendDevisConfirmationEmail } from "@/lib/email/notifications";
 import { notifyDemandeIncompleteIfNeeded } from "@/lib/email/incomplete-demande";
-import { planifierRelancesDemande } from "@/lib/email/relances";
+import { annulerRelancesDemande, planifierRelancesDemande } from "@/lib/email/relances";
 import {
   champsManquantsClient,
   computeCompletude,
@@ -239,6 +239,7 @@ export async function n8nGenererDevis(demandeId: string, baseUrl?: string) {
     email_sent = mail.ok;
     email_simulated = !!mail.simulated;
     email_error = mail.error;
+    await annulerRelancesDemande(demandeId, "incomplet");
     await planifierRelancesDemande(demandeId, demande.email, calc.urgence);
   }
 

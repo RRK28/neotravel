@@ -7,10 +7,16 @@ import {
   resetStore,
   updateDemande,
 } from "@/lib/db/memory-store";
-import { annulerRelancesDemande, planifierRelancesDemande, processRelancesDue } from "@/lib/email/relances";
+import {
+  annulerRelancesDemande,
+  planifierRelancesDemande,
+  planifierRelancesIncomplet,
+  processRelancesDue,
+} from "@/lib/email/relances";
 
 vi.mock("@/lib/email/notifications", () => ({
   sendRelanceEmail: vi.fn().mockResolvedValue({ ok: true, simulated: true }),
+  sendRelanceIncompleteEmail: vi.fn().mockResolvedValue({ ok: true, simulated: true }),
 }));
 
 describe("planifierRelancesDemande", () => {
@@ -18,7 +24,7 @@ describe("planifierRelancesDemande", () => {
     await resetStore();
   });
 
-  it("planifie J+2 et J+7 en production", async () => {
+  it("planifie J+2 et J+7 en production avec type devis", async () => {
     vi.stubEnv("DEMO_MODE", "false");
 
     const demande = await createDemande({ email: "test@example.com" });
@@ -27,6 +33,7 @@ describe("planifierRelancesDemande", () => {
 
     const relances = (await listRelances()).sort((a, b) => a.numero - b.numero);
     expect(relances).toHaveLength(2);
+    expect(relances.every((r) => (r.type ?? "devis") === "devis")).toBe(true);
 
     const j2 = new Date(relances[0]!.date_prevue).getTime() - t0;
     const j7 = new Date(relances[1]!.date_prevue).getTime() - t0;
@@ -53,6 +60,32 @@ describe("planifierRelancesDemande", () => {
 
     vi.useRealTimers();
     vi.unstubAllEnvs();
+  });
+});
+
+describe("planifierRelancesIncomplet", () => {
+  beforeEach(async () => {
+    await resetStore();
+  });
+
+  it("planifie des relances type incomplet", async () => {
+    const demande = await createDemande({ email: "test@example.com", statut: "incomplet" });
+    await planifierRelancesIncomplet(demande.id, "test@example.com");
+
+    const relances = await listRelances();
+    expect(relances).toHaveLength(2);
+    expect(relances.every((r) => r.type === "incomplet")).toBe(true);
+  });
+
+  it("remplace les relances incomplet existantes", async () => {
+    const demande = await createDemande({ email: "test@example.com", statut: "incomplet" });
+    await planifierRelancesIncomplet(demande.id, "test@example.com");
+    await planifierRelancesIncomplet(demande.id, "test@example.com");
+
+    const relances = await listRelances();
+    const enAttente = relances.filter((r) => r.statut === "en_attente");
+    expect(enAttente).toHaveLength(2);
+    expect(relances.filter((r) => r.statut === "annulee")).toHaveLength(2);
   });
 });
 
@@ -83,6 +116,33 @@ describe("annulerRelancesDemande", () => {
 
     expect(count).toBe(2);
     expect(relances.every((r) => r.statut === "annulee")).toBe(true);
+  });
+
+  it("annule uniquement le type demandé", async () => {
+    const demande = await createDemande({ email: "test@example.com" });
+    await createRelance({
+      demande_id: demande.id,
+      numero: 1,
+      type: "incomplet",
+      date_prevue: new Date().toISOString(),
+      statut: "en_attente",
+      email_destinataire: "test@example.com",
+    });
+    await createRelance({
+      demande_id: demande.id,
+      numero: 1,
+      type: "devis",
+      date_prevue: new Date().toISOString(),
+      statut: "en_attente",
+      email_destinataire: "test@example.com",
+    });
+
+    const count = await annulerRelancesDemande(demande.id, "incomplet");
+    const relances = await listRelances();
+
+    expect(count).toBe(1);
+    expect(relances.find((r) => r.type === "incomplet")?.statut).toBe("annulee");
+    expect(relances.find((r) => r.type === "devis")?.statut).toBe("en_attente");
   });
 
   it("est déclenché quand le statut passe à accepte", async () => {
@@ -138,6 +198,67 @@ describe("processRelancesDue", () => {
     const relances = await listRelances();
 
     expect(results).toHaveLength(1);
+    expect(results[0]?.email_sent).toBe(false);
+    expect(results[0]?.statut).toBe("annulee");
+    expect(relances[0]?.statut).toBe("annulee");
+  });
+
+  it("envoie une relance incomplet avec lien formulaire", async () => {
+    const { sendRelanceIncompleteEmail } = await import("@/lib/email/notifications");
+
+    const demande = await createDemande({
+      email: "client@example.com",
+      statut: "incomplet",
+      ville_depart: "Paris",
+      ville_arrivee: "Lyon",
+      type_client: "particulier",
+    });
+    const past = new Date(Date.now() - 60_000).toISOString();
+    await createRelance({
+      demande_id: demande.id,
+      numero: 1,
+      type: "incomplet",
+      date_prevue: past,
+      statut: "en_attente",
+      email_destinataire: "client@example.com",
+    });
+
+    const results = await processRelancesDue();
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.email_sent).toBe(true);
+    expect(results[0]?.type).toBe("incomplet");
+    expect(sendRelanceIncompleteEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ id: demande.id }),
+      expect.arrayContaining(["date_depart", "nb_passagers"]),
+      1,
+      undefined,
+    );
+  });
+
+  it("annule les relances incomplet si la demande est complète", async () => {
+    const demande = await createDemande({
+      email: "client@example.com",
+      statut: "qualifie",
+      ville_depart: "Paris",
+      ville_arrivee: "Lyon",
+      type_client: "particulier",
+      date_depart: "2026-08-01",
+      nb_passagers: 30,
+    });
+    const past = new Date(Date.now() - 60_000).toISOString();
+    await createRelance({
+      demande_id: demande.id,
+      numero: 1,
+      type: "incomplet",
+      date_prevue: past,
+      statut: "en_attente",
+      email_destinataire: "client@example.com",
+    });
+
+    const results = await processRelancesDue();
+    const relances = await listRelances();
+
     expect(results[0]?.email_sent).toBe(false);
     expect(results[0]?.statut).toBe("annulee");
     expect(relances[0]?.statut).toBe("annulee");

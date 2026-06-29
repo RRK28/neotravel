@@ -2,7 +2,7 @@ import { calculerDevis, determinerUrgence } from "@/lib/pricing/calculer-devis";
 import { estimerTrajet } from "@/lib/pricing/estimer-trajet";
 import { sendDevisConfirmationEmail } from "@/lib/email/notifications";
 import { notifyDemandeIncompleteIfNeeded, LABEL_CHAMP_MANQUANT } from "@/lib/email/incomplete-demande";
-import { planifierRelancesDemande } from "@/lib/email/relances";
+import { planifierRelancesDemande, annulerRelancesDemande } from "@/lib/email/relances";
 import {
   champsManquantsClient,
   computeCompletude,
@@ -220,6 +220,7 @@ export async function processDemandePipeline(
     mailOk = mail.ok;
     mailSimulated = !!mail.simulated;
     mailErr = mail.error;
+    await annulerRelancesDemande(demande.id, "incomplet");
     await planifierRelancesDemande(demande.id, demande.email, urgence);
   }
 
@@ -301,10 +302,12 @@ export async function ingestDemandeFromText(
 
 export interface WizardDemandeInput {
   type_trajet: "aller_simple" | "aller_retour";
-  nb_passagers: number;
+  nb_passagers?: number;
+  passagers_incertain?: boolean;
   ville_depart: string;
   ville_arrivee: string;
-  date_depart: string;
+  date_depart?: string;
+  date_incertaine?: boolean;
   date_retour?: string;
   commentaire?: string;
   type_client: TypeClient;
@@ -321,8 +324,12 @@ export interface WizardDemandeRecap {
   ville_depart: string;
   ville_arrivee: string;
   type_trajet: string;
-  nb_passagers: number;
-  date_depart: string;
+  nb_passagers?: number;
+  date_depart?: string;
+  date_incertaine?: boolean;
+  passagers_incertain?: boolean;
+  incomplet?: boolean;
+  champs_manquants?: string[];
   distance_km?: number;
   duree_heures?: number;
   prix_ttc?: number;
@@ -343,11 +350,13 @@ export async function processWizardDemande(
 
   let demande = await createDemande({
     type_trajet: input.type_trajet,
-    nb_passagers: input.nb_passagers,
+    nb_passagers: input.passagers_incertain ? undefined : input.nb_passagers,
+    passagers_incertain: input.passagers_incertain,
     ville_depart: input.ville_depart.trim(),
     ville_arrivee: input.ville_arrivee.trim(),
-    date_depart: input.date_depart,
-    date_retour: input.date_retour,
+    date_depart: input.date_incertaine ? undefined : input.date_depart,
+    date_incertaine: input.date_incertaine,
+    date_retour: input.date_incertaine ? undefined : input.date_retour,
     commentaire: input.commentaire?.trim(),
     type_client: input.type_client,
     nom: nomComplet,
@@ -360,6 +369,40 @@ export async function processWizardDemande(
   demande = await enrichirDistance(demande);
 
   const est = estimerTrajet(demande.ville_depart!, demande.ville_arrivee!);
+
+  const missing = champsManquantsClient(demande);
+  if (missing.length > 0) {
+    const score = computeCompletude(demande);
+    await updateDemande(demande.id, { statut: "incomplet", score_completude: score });
+
+    let email_sent = false;
+    let email_simulated = false;
+    let email_error: string | undefined;
+    if (demande.email) {
+      const notif = await notifyDemandeIncompleteIfNeeded(demande, missing, options?.baseUrl);
+      email_sent = notif.sent;
+      email_simulated = !!notif.simulated;
+      email_error = notif.error;
+    }
+
+    return {
+      demande_id: demande.id,
+      ville_depart: demande.ville_depart!,
+      ville_arrivee: demande.ville_arrivee!,
+      type_trajet: input.type_trajet,
+      nb_passagers: demande.nb_passagers,
+      date_depart: demande.date_depart,
+      date_incertaine: demande.date_incertaine,
+      passagers_incertain: demande.passagers_incertain,
+      incomplet: true,
+      champs_manquants: missing,
+      distance_km: demande.distance_km,
+      duree_heures: est?.duree_heures,
+      email_sent,
+      email_simulated,
+      email_error,
+    };
+  }
 
   if (!demande.distance_km) {
     await updateDemande(demande.id, {
@@ -434,6 +477,7 @@ export async function processWizardDemande(
     email_sent = mail.ok;
     email_simulated = !!mail.simulated;
     email_error = mail.error;
+    await annulerRelancesDemande(demande.id, "incomplet");
     await planifierRelancesDemande(demande.id, demande.email, urgence);
   }
 

@@ -1,6 +1,7 @@
 import { updateDemande } from "@/lib/db/memory-store";
 import type { Demande } from "@/lib/types";
 import { sendDemandeIncompleteEmail } from "@/lib/email/notifications";
+import { planifierRelancesIncomplet } from "@/lib/email/relances";
 
 export { LABEL_CHAMP_MANQUANT } from "@/lib/email/champs-labels";
 
@@ -31,6 +32,9 @@ export async function notifyDemandeIncompleteIfNeeded(
       email_incomplet_champs: [...missing],
       email_incomplet_envoye_at: new Date().toISOString(),
     });
+    if (demande.email) {
+      await planifierRelancesIncomplet(demande.id, demande.email);
+    }
   }
 
   return { sent: mail.ok, simulated: mail.simulated, error: mail.error };

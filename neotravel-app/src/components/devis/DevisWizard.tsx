@@ -58,11 +58,15 @@ export function DevisWizard({ initialData, onClose, embedded = false }: DevisWiz
       ) {
         e.ville_arrivee = "La ville d'arrivée doit être différente du départ";
       }
-      if (!form.date_depart) e.date_depart = "Indiquez la date de départ";
-      if (form.type_trajet === "aller_retour" && !form.date_retour) {
+      if (!form.date_incertaine && !form.date_depart) {
+        e.date_depart = "Indiquez la date de départ";
+      }
+      if (form.type_trajet === "aller_retour" && !form.date_incertaine && !form.date_retour) {
         e.date_retour = "Indiquez la date de retour";
       }
-      if (form.nb_passagers < 1) e.nb_passagers = "Minimum 1 passager";
+      if (!form.passagers_incertain && form.nb_passagers < 1) {
+        e.nb_passagers = "Minimum 1 passager";
+      }
     }
     if (s === 3) {
       if (!form.nom.trim()) e.nom = "Indiquez votre nom";
@@ -97,11 +101,16 @@ export function DevisWizard({ initialData, onClose, embedded = false }: DevisWiz
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type_trajet: form.type_trajet,
-          nb_passagers: form.nb_passagers,
+          nb_passagers: form.passagers_incertain ? undefined : form.nb_passagers,
+          passagers_incertain: form.passagers_incertain || undefined,
           ville_depart: labelVille(form.ville_depart),
           ville_arrivee: labelVille(form.ville_arrivee),
-          date_depart: form.date_depart,
-          date_retour: form.type_trajet === "aller_retour" ? form.date_retour : undefined,
+          date_depart: form.date_incertaine ? undefined : form.date_depart,
+          date_incertaine: form.date_incertaine || undefined,
+          date_retour:
+            form.type_trajet === "aller_retour" && !form.date_incertaine
+              ? form.date_retour
+              : undefined,
           commentaire: form.commentaire || undefined,
           type_client: form.type_client,
           nom: form.nom,
@@ -351,9 +360,20 @@ function StepVoyage({
           type="number"
           min={1}
           max={200}
-          value={form.nb_passagers}
+          value={form.passagers_incertain ? "" : form.nb_passagers}
+          disabled={form.passagers_incertain}
           onChange={(e) => update("nb_passagers", parseInt(e.target.value, 10) || 1)}
-          className="devis-input w-32"
+          className="devis-input w-32 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          placeholder={form.passagers_incertain ? "À préciser" : undefined}
+        />
+        <UncertainCheckbox
+          checked={form.passagers_incertain}
+          onChange={(checked) => {
+            update("passagers_incertain", checked);
+            if (checked) update("nb_passagers", 0);
+            else if (form.nb_passagers < 1) update("nb_passagers", 20);
+          }}
+          label="Je ne suis pas sûr du nombre de passagers"
         />
       </FieldGroup>
 
@@ -378,12 +398,24 @@ function StepVoyage({
         <FieldGroup label="Date de départ" error={errors.date_depart}>
           <input
             type="date"
-            value={form.date_depart}
+            value={form.date_incertaine ? "" : form.date_depart}
+            disabled={form.date_incertaine}
             onChange={(e) => update("date_depart", e.target.value)}
-            className="devis-input"
+            className="devis-input disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          />
+          <UncertainCheckbox
+            checked={form.date_incertaine}
+            onChange={(checked) => {
+              update("date_incertaine", checked);
+              if (checked) {
+                update("date_depart", "");
+                update("date_retour", "");
+              }
+            }}
+            label="Je ne suis pas sûr de la date"
           />
         </FieldGroup>
-        {form.type_trajet === "aller_retour" && (
+        {form.type_trajet === "aller_retour" && !form.date_incertaine && (
           <FieldGroup label="Date de retour" error={errors.date_retour}>
             <input
               type="date"
@@ -590,8 +622,22 @@ function ConfirmationView({ recap, onClose }: { recap: DevisRecap; onClose?: () 
           <dl className="mt-4 space-y-2 text-sm">
             <RecapRow label="Trajet" value={`${recap.ville_depart} → ${recap.ville_arrivee}`} />
             <RecapRow label="Type" value={trajetLabel} />
-            <RecapRow label="Passagers" value={String(recap.nb_passagers)} />
-            <RecapRow label="Date" value={formatDate(recap.date_depart)} />
+            <RecapRow
+              label="Passagers"
+              value={
+                recap.passagers_incertain || recap.nb_passagers == null
+                  ? "À préciser"
+                  : String(recap.nb_passagers)
+              }
+            />
+            <RecapRow
+              label="Date"
+              value={
+                recap.date_incertaine || !recap.date_depart
+                  ? "À préciser"
+                  : formatDate(recap.date_depart)
+              }
+            />
             {recap.distance_km != null && (
               <RecapRow
                 label="Distance estimée"
@@ -616,13 +662,27 @@ function ConfirmationView({ recap, onClose }: { recap: DevisRecap; onClose?: () 
         </div>
 
         <div className="rounded-lg bg-violet-50 px-4 py-3 text-sm text-violet-800">
-          {recap.email_sent && !recap.email_simulated && (
+          {recap.incomplet && (
+            <>
+              Votre demande est enregistrée mais incomplète.
+              {recap.email_sent && !recap.email_simulated && (
+                <> Un email vous a été envoyé avec un lien pour compléter les informations manquantes.</>
+              )}
+              {recap.email_sent && recap.email_simulated && (
+                <> Un email de complément vous sera envoyé sous peu.</>
+              )}
+              {!recap.email_sent && recap.email_error && (
+                <> Email non envoyé : {recap.email_error}</>
+              )}
+            </>
+          )}
+          {!recap.incomplet && recap.email_sent && !recap.email_simulated && (
             <>Un email de confirmation avec votre devis vous a été envoyé.</>
           )}
-          {recap.email_sent && recap.email_simulated && (
+          {!recap.incomplet && recap.email_sent && recap.email_simulated && (
             <>Votre devis vous sera envoyé par e-mail dans les prochaines minutes.</>
           )}
-          {!recap.email_sent && !recap.cas_complexe && recap.email_error && (
+          {!recap.incomplet && !recap.email_sent && !recap.cas_complexe && recap.email_error && (
             <>Email non envoyé : {recap.email_error}</>
           )}
           {recap.cas_complexe && (
@@ -709,6 +769,28 @@ function ToggleOption({
     >
       {children}
     </button>
+  );
+}
+
+function UncertainCheckbox({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 rounded border-slate-300 text-[var(--color-wizard)] focus:ring-[var(--color-wizard)]"
+      />
+      <span>{label}</span>
+    </label>
   );
 }
 

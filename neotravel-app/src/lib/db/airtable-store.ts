@@ -272,13 +272,21 @@ export async function listLogs(limit = 100): Promise<LogEntry[]> {
     .slice(0, limit);
 }
 
-export async function annulerRelancesDemande(demandeId: string): Promise<number> {
+export async function annulerRelancesDemande(
+  demandeId: string,
+  type?: import("@/lib/types").RelanceType,
+): Promise<number> {
   const { tables } = getAirtableConfig();
   const records = await listAllFromTable<Relance>(tables.relances);
   let count = 0;
 
   for (const { airtableId, entity } of records) {
-    if (entity.demande_id === demandeId && entity.statut === "en_attente") {
+    const relanceType = entity.type ?? "devis";
+    if (
+      entity.demande_id === demandeId &&
+      entity.statut === "en_attente" &&
+      (type === undefined || relanceType === type)
+    ) {
       const updated: Relance = { ...entity, statut: "annulee" };
       await replaceRecord(tables.relances, airtableId, updated);
       count++;
@@ -308,7 +316,8 @@ export async function processRelance(relanceId: string): Promise<Relance | null>
   await replaceRecord(tables.relances, found.airtableId, relance);
 
   const demandeFound = await findByEntityId<Demande>(tables.demandes, relance.demande_id);
-  if (demandeFound) {
+  const relanceType = relance.type ?? "devis";
+  if (demandeFound && relanceType === "devis") {
     let statut: StatutDemande = relance.numero === 1 ? "relance_1" : "relance_2";
     if (relance.numero === 2) {
       statut = "cloture";

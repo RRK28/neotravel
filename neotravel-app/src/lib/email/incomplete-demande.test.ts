@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as memoryStore from "@/lib/db/memory-store";
-import { createDemande, resetStore } from "@/lib/db/memory-store";
+import { createDemande, listRelances, resetStore } from "@/lib/db/memory-store";
 import {
   notifyDemandeIncompleteIfNeeded,
   shouldNotifyIncomplete,
@@ -76,5 +76,21 @@ describe("notifyDemandeIncompleteIfNeeded", () => {
     expect(sendDemandeIncompleteEmail).toHaveBeenCalledTimes(1);
 
     updateSpy.mockRestore();
+  });
+
+  it("planifie des relances incomplet après envoi email", async () => {
+    const demande = await createDemande({
+      email: "client@example.com",
+      ville_depart: "Paris",
+      ville_arrivee: "Lyon",
+      type_client: "particulier",
+      statut: "incomplet",
+    });
+
+    await notifyDemandeIncompleteIfNeeded(demande, ["date_depart", "nb_passagers"]);
+
+    const relances = await listRelances();
+    expect(relances).toHaveLength(2);
+    expect(relances.every((r) => r.type === "incomplet")).toBe(true);
   });
 });

@@ -182,11 +182,19 @@ export async function listLogs(limit = 100): Promise<LogEntry[]> {
     .slice(0, limit);
 }
 
-export async function annulerRelancesDemande(demandeId: string): Promise<number> {
+export async function annulerRelancesDemande(
+  demandeId: string,
+  type?: import("@/lib/types").RelanceType,
+): Promise<number> {
   const store = await ensureStore();
   let count = 0;
   for (const r of store.relances) {
-    if (r.demande_id === demandeId && r.statut === "en_attente") {
+    const relanceType = r.type ?? "devis";
+    if (
+      r.demande_id === demandeId &&
+      r.statut === "en_attente" &&
+      (type === undefined || relanceType === type)
+    ) {
       r.statut = "annulee";
       count++;
     }
@@ -213,7 +221,8 @@ export async function processRelance(relanceId: string): Promise<Relance | null>
 
   relance.statut = "envoyee";
   const demande = store.demandes.find((d) => d.id === relance.demande_id);
-  if (demande) {
+  const relanceType = relance.type ?? "devis";
+  if (demande && relanceType === "devis") {
     demande.statut = relance.numero === 1 ? "relance_1" : "relance_2";
     demande.updated_at = new Date().toISOString();
 
