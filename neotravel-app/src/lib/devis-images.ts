@@ -1,8 +1,8 @@
 /** Images Unsplash (libres) pour l'UI devis — pas d'hébergement externe requis côté app. */
 
 export const DEVIS_IMAGES = {
-  heroBackground:
-    "https://images.unsplash.com/photo-1544620307-c9125d3a8698?auto=format&fit=crop&w=1920&q=80",
+  /** Hébergée dans public/ — l'ancienne URL Unsplash (photo-1544620307) renvoie 404. */
+  heroBackground: "/hero-bg.jpg",
   devisPageBackground:
     "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80",
   stepVoyage:
