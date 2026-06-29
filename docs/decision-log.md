@@ -4,13 +4,13 @@ Décisions techniques majeures, datées et motivées. Format : **date — décis
 
 ---
 
-## 2026-06-23 — Option A : chat IA + agent avec tools
+## 2026-06-23 — Option B : agent Vercel AI SDK dans Next.js
 
-**Contexte :** Fiche technique Interstellabs (Option A agent conversationnel vs Option B formulaire).
+**Contexte :** Fiche technique Interstellabs — **Option A** (agent dans n8n) vs **Option B** (agent dans Next.js via Vercel AI SDK).
 
-**Décision :** Retenir l'**Option A** avec Vercel AI SDK et outils métier (`qualifier_demande`, `calculer_devis`, `generer_devis`, etc.).
+**Décision :** Retenir l'**Option B** : Vercel AI SDK + outils métier TypeScript (`qualifier_demande`, `calculer_devis`, `generer_devis`, etc.).
 
-**Conséquence :** Parcours **chat** principal (`/chat`) ; formulaire guidé en **Option B** alternatif (`/devis`).
+**Conséquence :** L'agent conversationnel vit dans `/api/chat` ; n8n ne gère que les relances planifiées. Le formulaire `/devis` reste un parcours alternatif sans LLM, distinct de l'Option B stack.
 
 ---
 
@@ -50,7 +50,7 @@ Décisions techniques majeures, datées et motivées. Format : **date — décis
 
 **Décision :** n8n (Cloud ou Docker) **orchestre** les outils via `POST /api/n8n/*` (`qualifier`, `calculer-devis`, `generer-devis`, `relance`) ; workflow exporté dans `n8n/workflows/neotravel-orchestration.json`. Alias relance : `/api/webhooks/relance`.
 
-**Conséquence :** n8n appelle la même logique métier que le chat Option A ; relances aussi déclenchables depuis `/admin` si n8n indisponible.
+**Conséquence :** n8n déclenche les relances via `/api/webhooks/relance` ; workflow d'orchestration `/api/n8n/*` en complément pour la démo jury.
 
 ---
 

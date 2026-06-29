@@ -73,43 +73,68 @@ On ne vise pas un ERP complet. L'objectif est un prototype démontrable de bout 
 
 ## 6. Parcours cible
 
-Flux nominal visé pour le MVP (**Option A — parcours principal**) :
+Le prototype automatise la **chaîne commerciale complète** décrite dans la fiche technique Interstellabs. Le chatbot n'est qu'une porte d'entrée : le livrable couvre captation, qualification, devis, relances et pilotage.
 
-1. **Demande** — Le prospect arrive sur la landing et ouvre le **chat IA** (CTA principal). Il décrit son trajet en langage naturel.
-2. **Qualification** — L'agent collecte les champs requis (lieux, dates, passagers, contact) via l'outil `qualifier_demande`. Les champs manquants sont demandés explicitement.
-3. **Devis** — Quand la demande est complète, le back-office appelle `calculer_devis()` puis `generer_devis()`. Le prospect reçoit le montant TTC et un lien vers le document.
-4. **Relance** — Si pas de réponse, n8n déclenche des emails de relance (1re et 2e relance selon règles urgence).
-5. **Pilotage** — Le commercial consulte le dashboard : demandes en cours, devis envoyés, cas complexes, relances planifiées.
+**Parcours nominal (Option B — Vercel AI SDK) :**
 
-**Parcours alternatif (Option B)** : formulaire guidé en 3 étapes sur `/devis` — même pipeline métier (`processDemandePipeline`), sans LLM.
+1. **Captation** — Le prospect arrive sur la landing Next.js et ouvre le chat (`/chat`). Il exprime son besoin en langage naturel (trajet, dates, passagers, contact).
+2. **Qualification** — L'agent IA (Vercel AI SDK) détecte les informations manquantes, l'urgence et la complexité via l'outil `qualifier_demande`. Les champs incomplets sont redemandés explicitement.
+3. **Devis** — Une fois la demande qualifiée, l'agent appelle `calculer_devis()` (code pur, jamais le LLM) puis `generer_devis()` pour produire le PDF et mettre à jour le pipeline.
+4. **Suivi** — Envoi email (Brevo/SMTP), planification des relances (J+2 urgent, J+3/J+7 standard) enregistrée en base ; n8n déclenche les envois à date fixe.
+5. **Pilotage** — Le commercial consulte `/admin` : KPIs, statuts, demandes urgentes, cas complexes.
+6. **Reprise humaine** — Si la demande dépasse les seuils (> 85 passagers, trajet hors zone, options atypiques), l'agent appelle `escalader_humain` et le statut passe en `cas_complexe`.
 
-**Parcours escalade** : si la demande dépasse les seuils automatiques (> 85 passagers, > 800 km, options non standard), l'agent appelle `escalader_humain` et le statut passe en `cas_complexe`.
+**Parcours alternatif sans LLM** : formulaire guidé en 3 étapes sur `/devis` — même pipeline métier (`processDemandePipeline`), utile pour la démo ou les prospects qui préfèrent un formulaire structuré. Ce n'est pas l'« Option B » de la fiche technique (qui désigne la stack Vercel AI SDK).
 
 **Statuts du pipeline :** nouveau → incomplet → qualifie → devis_envoye → relance_1 / relance_2 → accepte / refuse / cloture / cas_complexe
 
-## 7. Architecture fonctionnelle et technique (Option A)
+## 7. Architecture fonctionnelle et technique (Option B)
 
-Architecture retenue après lecture de la fiche technique NeoTravel (**Option A — chat IA principal**) :
+Architecture retenue conformément à la fiche technique Interstellabs (**Option B — Vercel AI SDK**) : l'intelligence conversationnelle est dans Next.js ; n8n reste en arrière-plan pour les tâches planifiées.
 
 ```
-[Prospect] → /chat (Option A) ──→ Agent IA + tools ──┐
-                                                      ├──→ qualifier → calculer → generer → Store
-[Prospect] → /devis (Option B) ──→ processWizard ────┘         ↑
-                                                                 │
-                    n8n Cloud (orchestration) ──→ POST /api/n8n/* (mêmes tools REST)
-                                                                 │
-                                                         relances email
-                                                                 ↓
-                                                         Dashboard admin
+PROSPECT
+   |
+   v
+[ Landing + Chat Next.js ]  <--->  streaming temps réel
+   |
+   v
+[ Agent IA (Vercel AI SDK) ]  -- decide quels outils appeler
+   |
+   +---> qualifier_demande()  ----> Store (Demandes)
+   +---> lookup_matrices()    ----> Store (Matrices)
+   +---> calculer_devis()     ----> CODE PUR (pas d'IA)
+   +---> generer_devis()      ----> PDF + Store (Devis)
+   +---> planifier_relance()  ----> Store (Relances)
+   +---> escalader_humain()   ----> notification equipe
+   |
+   v
+[ n8n — planifie ]  --->  POST /api/webhooks/relance  --->  emails J+2 / J+3 / J+7
+   |
+   v
+[ Dashboard /admin ]  --->  KPIs, pipeline, urgences
 ```
 
-**Option A** : l'agent conversationnel dialogue avec le prospect et délègue toute logique métier à des outils typés (`qualifier_demande`, `calculer_devis`, `generer_devis`).
+**Les 5 briques du système (fiche technique) :**
 
-**Option B** : formulaire `/devis` sans LLM — même pipeline tarifaire (`processWizardDemande`).
+| Brique | Technologie | Rôle |
+|--------|-------------|------|
+| Interface prospect | Next.js sur Vercel | Site web + chat en temps réel |
+| Agent IA | Vercel AI SDK | Mène la conversation et décide quoi faire |
+| Outils métier | TypeScript | Exécutent les actions (prix, PDF, CRM) |
+| Base de données | Supabase (cible) / JSON local (MVP) | Stocke demandes, devis, relances, logs |
+| Back-office | n8n | Relances automatiques à date fixe |
+| Emails | Brevo (SMTP) | Envoi des devis et relances |
+| Pilotage | Page `/admin` Next.js | Tableau de bord direction |
 
-**n8n** : enchaîne les mêmes outils via l'API REST authentifiée (`/api/n8n/qualifier`, `/calculer-devis`, `/generer-devis`, `/relance`) pour la démo jury et les relances planifiées.
+**Option A vs Option B (fiche Interstellabs) :**
 
-L'IA ne prend aucune décision tarifaire seule.
+- **Option A** : l'agent conversationnel est porté par **n8n** (workflows visuels). Un seul « cerveau » orchestrateur.
+- **Option B (retenue)** : l'agent est codé dans **Next.js avec Vercel AI SDK** ; n8n ne gère que les relances planifiées, pas le dialogue.
+
+**Rôle de n8n dans notre prototype :** workflow planifié qui appelle `POST /api/webhooks/relance` pour traiter les relances dues. Un workflow d'orchestration complète (`/api/n8n/*`) existe en complément pour la démo jury, mais ce n'est pas le cœur de l'architecture Option B.
+
+**Qui fait quoi :** l'IA dialogue et choisit le prochain outil ; le code exécute (`calculer_devis`, PDF, écriture en base) ; n8n envoie les relances à date fixe. L'IA ne calcule jamais le prix.
 
 ## 8. Règle d'or : l'IA ne calcule jamais le prix
 
@@ -135,13 +160,13 @@ Les matrices tarifaires (saison, urgence, capacité, options, marge, TVA) sont c
 | LLM | Ollama (local) ou OpenAI (API) | Dialogue naturel, configurable |
 | Pricing | TypeScript pur (`calculer-devis.ts`) | Calcul déterministe, testable |
 | PDF | Génération HTML/texte | Aperçu devis exportable |
-| Automatisation | n8n (Docker) | Workflows relance email |
-| Stockage | JSON local (memory-store) | Persistance légère pour le MVP |
-| Stockage (option) | Supabase (PostgreSQL) | Si migration BDD prévue |
+| Automatisation | n8n (Cloud ou Docker) | Relances planifiées (back-office) |
+| Stockage | JSON local (memory-store) | Persistance MVP ; Supabase prévu en cible |
+| Emails | Brevo (SMTP) | Envoi devis et relances |
 | Tests | Vitest + Playwright | Unitaires pricing + E2E parcours |
 | Déploiement | Vercel ou Docker local | Environnement de démo |
 
-n8n tourne en local via `docker-compose.yml` ou en Cloud (`app.n8n.cloud`). Il appelle `/api/n8n/*` (orchestration complète) et `/api/n8n/relance` (alias relances).
+n8n tourne en local via `docker-compose.yml` ou en Cloud (`app.n8n.cloud`). Rôle principal : déclencher `POST /api/webhooks/relance` selon le calendrier J+2 / J+3 / J+7 (délais raccourcis en démo jury).
 
 ## 10. Planning prévisionnel
 
@@ -209,10 +234,12 @@ Chacun peut intervenir en appui sur les autres lots. Les points hebdomadaires pe
 
 **Contraintes :**
 
-- Délai projet : environ 4 semaines
-- Stack imposée par la fiche technique : Next.js + agent IA + n8n (parcours **Option A** = chat `/chat` ; **Option B** = formulaire guidé `/devis` — ce ne sont pas des noms de stack)
-- Niveau attendu : prototype fonctionnel, pas production-ready
-- Soutenance Epitech : démo live du parcours + explication des choix techniques
+- Délai projet : 1 semaine (fiche technique) ; planning interne étendu sur 4 semaines pour le Groupe 16
+- Stack **Option B** imposée par la fiche Interstellabs : Next.js + **Vercel AI SDK** (agent dans le code) + **n8n** (relances planifiées uniquement) + base de données (Supabase en cible)
+- Règle d'architecture : un seul cerveau agent — AI SDK **ou** n8n, pas les deux en parallèle pour le dialogue
+- Interdit : laisser le LLM calculer un prix ou envoyer une offre engageante sans garde-fou
+- Niveau attendu : prototype fonctionnel couvrant toute la chaîne commerciale, pas production-ready
+- Soutenance Epitech (01/07) : démo live 20 min + Q&R sur les choix techniques
 
 ## 15. Prochaines étapes
 
