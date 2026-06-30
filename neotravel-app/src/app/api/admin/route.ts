@@ -5,6 +5,7 @@ import {
   listLogs,
   listRelances,
   getDashboardStats,
+  getStoreBackend,
 } from "@/lib/db/memory-store";
 import { processRelancesDue } from "@/lib/email/relances";
 import { isEmailConfigured, resolveEmailProvider } from "@/lib/email/config";
@@ -21,6 +22,9 @@ export async function GET() {
     devis,
     relances,
     logs,
+    storage: {
+      backend: getStoreBackend(),
+    },
     email: {
       configured: isEmailConfigured(),
       provider: resolveEmailProvider(),

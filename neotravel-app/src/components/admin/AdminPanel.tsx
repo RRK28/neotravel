@@ -39,6 +39,7 @@ export function AdminPanel() {
   const [emailInfo, setEmailInfo] = useState<{ configured: boolean; provider: string } | null>(
     null,
   );
+  const [storageBackend, setStorageBackend] = useState<"airtable" | "file" | null>(null);
   const [relanceBusy, setRelanceBusy] = useState(false);
 
   const load = async () => {
@@ -48,6 +49,7 @@ export function AdminPanel() {
     setDevis(data.devis ?? []);
     setStats(data.stats ?? null);
     setEmailInfo(data.email ?? null);
+    setStorageBackend(data.storage?.backend ?? null);
     setLoading(false);
   };
 
@@ -115,6 +117,14 @@ export function AdminPanel() {
             {emailInfo.configured
               ? `actifs (${emailInfo.provider})`
               : "simulation console — configurez RESEND ou SMTP dans .env"}
+            {storageBackend && (
+              <>
+                {" · "}Stockage :{" "}
+                {storageBackend === "airtable"
+                  ? "Airtable (persistant)"
+                  : "fichier local (éphémère sur Vercel)"}
+              </>
+            )}
             {" · "}
             Relances auto :{" "}
             <a

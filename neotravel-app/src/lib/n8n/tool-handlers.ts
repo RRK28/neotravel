@@ -11,6 +11,7 @@ import {
   createDevis,
   getDemande,
   getRelancesDue,
+  getStoreBackend,
   listDevis,
   logAction,
   updateDemande,
@@ -255,6 +256,7 @@ export async function n8nStatus() {
   return {
     ok: true,
     service: "neotravel-n8n",
+    storage_backend: getStoreBackend(),
     pending_relances: due.length,
     relances_dues: due.map((r) => ({
       id: r.id,

@@ -60,6 +60,14 @@ Vous pouvez aussi le trouver dans [Airtable API docs](https://airtable.com/devel
 ```env
 AIRTABLE_API_KEY=patXXXXXXXX
 AIRTABLE_BASE_ID=appXXXXXXXX
+# Optionnel (recommandé si vous renommez des tables)
+# AIRTABLE_TABLE_DEMANDES=Demandes
+# AIRTABLE_TABLE_DEVIS=Devis
+# AIRTABLE_TABLE_RELANCES=Relances
+# AIRTABLE_TABLE_LOGS=Logs
+#
+# Alias historique (équivaut à AIRTABLE_TABLE_DEMANDES)
+# AIRTABLE_TABLE=Demandes
 ```
 
 ### Vercel
@@ -68,6 +76,7 @@ Dans **Project → Settings → Environment Variables**, ajoutez :
 
 - `AIRTABLE_API_KEY`
 - `AIRTABLE_BASE_ID`
+  - (optionnel) `AIRTABLE_TABLE_*` si noms de tables personnalisés
 
 Redéployez après modification.
 
