@@ -512,12 +512,13 @@
       <div class="arch-layer" style="border-color: var(--orange)">
         <div class="arch-layer-label">Services externes</div>
         <div class="arch-blocks">
-          <div class="block block-gray">Fichier données</div>
+          <div class="block block-gray">Fichier ou Airtable</div>
           <div class="block block-gray">E-mails (Resend)</div>
           <div class="block block-orange">n8n (relances)</div>
         </div>
       </div>
     </div>
+    <p style="margin-top:1rem;font-size:0.95rem;color:var(--gray)"><strong>Couche stockage :</strong> en production, l'API NeoTravel peut persister dans <strong>Airtable</strong> (Demandes, Devis, Relances, Logs). n8n n'appelle pas Airtable — il passe par <code>/api/n8n/*</code>.</p>
   </div>
 
   <table>

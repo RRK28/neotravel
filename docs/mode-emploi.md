@@ -178,17 +178,19 @@ La fiche technique Interstellabs (`NeoTravel-Fiche-Technique-Option-B.pdf`) déc
          ▼                 ▼                 ▼
   ┌────────────┐    ┌────────────┐    ┌────────────┐
   │  Fichier   │    │   E-mails  │    │    n8n     │
-  │  données   │    │  (Resend)  │    │ (relances) │
+  │  ou Airtable│   │  (Resend)  │    │ (relances) │
   └────────────┘    └────────────┘    └────────────┘
 ```
+
+> **Couche stockage :** en production Vercel, les données peuvent être persistées dans **Airtable** (tables Demandes, Devis, Relances, Logs). n8n n'y accède pas directement — tout passe par l'API NeoTravel.
 
 | Brique | En clair |
 |--------|----------|
 | **Site web** | Ce que voit le client et l'équipe commerciale |
 | **Assistant IA** | Comprend le message et décide quelle action lancer |
 | **Outils métier** | Exécutent le prix, le PDF, l'enregistrement |
-| **Fichier données** | Stocke demandes, devis et relances (JSON en prototype) |
-| **n8n** | Robot planifié pour les relances et la démo |
+| **Fichier données** | Stocke demandes, devis et relances (fichier JSON en local ; **Airtable** en production si `AIRTABLE_API_KEY` + `AIRTABLE_BASE_ID` sont configurés sur Vercel) |
+| **n8n** | Robot planifié pour les relances et la démo — **n'écrit pas dans Airtable** ; il appelle l'API NeoTravel qui persiste les données |
 | **E-mails** | Envoie devis et rappels au client |
 
 ### Attention : deux sens pour « Option A / B »

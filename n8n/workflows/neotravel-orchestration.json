@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## NeoTravel × n8n — Orchestration\n\n**Option A** : chat conversationnel + outils métier (`qualifier_demande`, `calculer_devis`, `generer_devis`)\n\nCe workflow enchaîne les **mêmes endpoints** que l'app via l'API REST NeoTravel.\n\n### Chaîne démo jury (▶ Démo jury)\n1. GET `/api/n8n/status`\n2. POST `/api/n8n/qualifier` — Paris → Lyon (35 pax)\n3. IF demande complète\n4. POST `/api/n8n/calculer-devis`\n5. POST `/api/n8n/generer-devis` — PDF + email\n6. POST `/api/n8n/relance`\n\n### Branche planifiée (15 min)\nRelances : status → relance\n\n⚠️ Après import : nœud **Config NeoTravel** → remplacer `COLLER_WEBHOOK_SECRET_ICI` par `WEBHOOK_SECRET` (Vercel).\n\n🔗 App : https://neotravel-app-gamma.vercel.app",
+        "content": "## NeoTravel × n8n — Orchestration\n\n**Option A** : chat conversationnel + outils métier (`qualifier_demande`, `calculer_devis`, `generer_devis`)\n\nCe workflow enchaîne les **mêmes endpoints** que l'app via l'API REST NeoTravel.\n\n💾 **Persistance** : pas de nœud Airtable — l'API NeoTravel enregistre les demandes/devis dans Airtable (si configuré sur Vercel).\n\n### Chaîne démo jury (▶ Démo jury)\n1. GET `/api/n8n/status`\n2. POST `/api/n8n/qualifier` — Paris → Lyon (35 pax)\n3. IF demande complète\n4. POST `/api/n8n/calculer-devis`\n5. POST `/api/n8n/generer-devis` — PDF + email\n6. POST `/api/n8n/relance`\n\n### Branche planifiée (15 min)\nRelances : status → relance\n\n⚠️ Après import : nœud **Config NeoTravel** → remplacer `COLLER_WEBHOOK_SECRET_ICI` par `WEBHOOK_SECRET` (Vercel).\n\n🔗 App : https://neotravel-app-gamma.vercel.app",
         "height": 480,
         "width": 520,
         "color": 4

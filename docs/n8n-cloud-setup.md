@@ -8,6 +8,8 @@ Ce guide configure l'**orchestration complète** NeoTravel via [n8n Cloud](https
 >
 > n8n **n'apparaît pas** dans l'interface Vercel : l'intégration se fait par des appels HTTP vers `/api/n8n/*`.
 
+> **Persistance Airtable :** n8n **n'appelle pas Airtable directement**. Les données passent par l'API NeoTravel (`/api/n8n/*`), qui persiste dans Airtable lorsque `AIRTABLE_API_KEY` et `AIRTABLE_BASE_ID` sont configurés sur Vercel. Aucun nœud Airtable n'est requis dans n8n pour le MVP.
+
 ---
 
 ## Architecture
