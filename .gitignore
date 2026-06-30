@@ -5,6 +5,7 @@
 !docs/mode-emploi-visuel.pdf
 *.zip
 !NeoTravel-Groupe16-livrable.zip
+!NeoTravel-Groupe16-livrable-complet.zip
 .venv/
 __pycache__/
 
